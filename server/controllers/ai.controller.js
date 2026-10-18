@@ -1,9 +1,22 @@
 import QuestionBank from "../models/QuestionBank.js";
 import { generateMCQFromText, generateMCQFromImage } from "../services/gemini.service.js";
-import { createRequire } from "module";
+import { PdfReader } from "pdfreader"; // 👈 নতুন লাইব্রেরি
 
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+// PDF থেকে টেক্সট বের করার হেল্পার ফাংশন
+const extractTextFromPdf = (buffer) => {
+  return new Promise((resolve, reject) => {
+    let text = "";
+    new PdfReader({}).parseBuffer(buffer, (err, item) => {
+      if (err) {
+        return reject(err);
+      } else if (!item) {
+        return resolve(text); // টেক্সট বের করা শেষ
+      } else if (item.text) {
+        text += item.text + " ";
+      }
+    });
+  });
+};
 
 // @desc    Generate MCQ from Text/PDF/Image
 // @route   POST /api/ai/generate
@@ -15,9 +28,14 @@ export const generateMCQ = async (req, res) => {
 
     // ১. PDF আপলোড
     if (req.file && req.file.mimetype === "application/pdf") {
-      const pdfData = await pdfParse(req.file.buffer);
+      const pdfText = await extractTextFromPdf(req.file.buffer);
       source = "pdf";
-      questions = await generateMCQFromText(pdfData.text, numQuestions || 10, difficulty || "medium");
+      
+      if (!pdfText || pdfText.trim() === "") {
+        return res.status(400).json({ success: false, message: "Could not extract text from this PDF. It might be an image-based PDF." });
+      }
+      
+      questions = await generateMCQFromText(pdfText, numQuestions || 10, difficulty || "medium");
     } 
     // ২. Image আপলোড
     else if (req.file && req.file.mimetype.startsWith("image/")) {
@@ -86,7 +104,6 @@ export const deleteQuestionBank = async (req, res) => {
       return res.status(404).json({ success: false, message: "Question Bank not found" });
     }
 
-    // চেক করা এই ব্যাংকটি এই টিচারের কিনা
     if (bank.teacher.toString() !== req.user._id.toString()) {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
