@@ -1,0 +1,147 @@
+import Student from "../models/Student.js";
+import Payment from "../models/Payment.js";
+import Schedule from "../models/Schedule.js";
+import Exam from "../models/Exam.js";
+import Attendance from "../models/Attendance.js";
+
+// @desc    Get Teacher Dashboard Stats
+// @route   GET /api/dashboard/teacher?range=6months
+export const getTeacherDashboard = async (req, res) => {
+  try {
+    const teacherId = req.user._id;
+    const range = req.query.range || '6months'; // 👈 ডিফল্ট ৬ মাস
+
+    const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
+
+    const duePayments = await Payment.find({ teacher: teacherId, status: "due" });
+    const totalDue = duePayments.reduce((acc, curr) => acc + curr.amount, 0);
+
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const today = days[new Date().getDay()];
+    const todaySchedules = await Schedule.find({ teacher: teacherId, day: today })
+      .populate("student", "name class")
+      .sort({ time: 1 });
+
+    const totalExams = await Exam.countDocuments({ teacher: teacherId });
+
+    // 👈 চার্ট ডেটা বের করার লজিক
+    let monthsToFetch = 6;
+    if (range === '1year') monthsToFetch = 12;
+    if (range === '1month') monthsToFetch = 1;
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1)); 
+
+    const paidPayments = await Payment.find({ 
+      teacher: teacherId, 
+      status: "paid",
+      paidDate: { $gte: startDate } 
+    });
+
+    const incomeChartData = [];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    for (let i = monthsToFetch - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const mName = monthNames[d.getMonth()];
+      const y = d.getFullYear();
+      
+      const monthlyIncome = paidPayments
+        .filter(p => {
+          const pDate = new Date(p.paidDate);
+          return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === y;
+        })
+        .reduce((acc, curr) => acc + curr.amount, 0);
+
+      incomeChartData.push({
+        name: `${mName} ${y.toString().slice(-2)}`, // যেমন: Jan 24
+        income: monthlyIncome
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalStudents,
+        totalDue,
+        todaySchedules,
+        totalExams,
+        incomeChartData
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get Student Dashboard Stats
+// @route   GET /api/dashboard/student
+export const getStudentDashboard = async (req, res) => {
+  // ... (স্টুডেন্ট ড্যাশবোর্ডের কোড আগের মতোই থাকবে)
+  try {
+    const studentProfile = await Student.findOne({ user: req.user._id });
+    
+    if (!studentProfile) {
+      return res.status(404).json({ success: false, message: "Student profile not linked" });
+    }
+
+    const totalPresent = await Attendance.countDocuments({ student: studentProfile._id, status: "present" });
+    const totalAbsent = await Attendance.countDocuments({ student: studentProfile._id, status: "absent" });
+
+    const recentPayments = await Payment.find({ student: studentProfile._id }).sort({ createdAt: -1 }).limit(5);
+
+    const pendingExams = await Exam.countDocuments({ student: studentProfile._id, status: "pending" });
+    const completedExams = await Exam.countDocuments({ student: studentProfile._id, status: "submitted" });
+
+    let totalDue = 0;
+    const paidPayments = await Payment.find({ student: studentProfile._id, status: "paid" });
+    
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); 
+    const currentYear = currentDate.getFullYear();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const joinDate = new Date(studentProfile.joinDate);
+    let joinMonth = joinDate.getMonth();
+    let joinYear = joinDate.getFullYear();
+
+    while (joinYear < currentYear || (joinYear === currentYear && joinMonth <= currentMonth)) {
+      const monthName = monthNames[joinMonth];
+      const isPaid = paidPayments.find(p => p.month === monthName && p.year === joinYear);
+
+      if (!isPaid) {
+        totalDue += studentProfile.monthlyFee;
+      }
+
+      joinMonth++;
+      if (joinMonth > 11) {
+        joinMonth = 0;
+        joinYear++;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        studentInfo: {
+          name: studentProfile.name,
+          class: studentProfile.class,
+          subject: studentProfile.subject,
+        },
+        attendance: {
+          present: totalPresent,
+          absent: totalAbsent
+        },
+        recentPayments,
+        totalDue,
+        exams: {
+          pending: pendingExams,
+          completed: completedExams
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

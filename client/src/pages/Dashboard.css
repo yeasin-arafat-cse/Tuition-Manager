@@ -1,0 +1,126 @@
+/* =========================================
+   Premium Dashboard Styles
+   ========================================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Stat Cards Premium Design */
+.stat-card {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 16px; /* আরও গোলাকার */
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* কার্ডের পেছনে একটি হালকা আলোর ইফেক্ট */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+/* আইকনের ডিজাইন */
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px; /* স্কয়ার শেপ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  z-index: 1;
+}
+
+.stat-icon.primary { background: rgba(79, 70, 229, 0.15); color: var(--primary); }
+.stat-icon.danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.stat-icon.success { background: rgba(16, 185, 129, 0.15); color: var(--secondary); }
+
+.stat-info h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-info h2 {
+  font-size: 2rem;
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+/* সেকশন (আজকের ক্লাস) ডিজাইন */
+.dashboard-section {
+  background-color: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ক্লাসের লিস্ট ডিজাইন */
+.schedule-item-dash {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  background: var(--bg-main);
+  border-left: 4px solid var(--primary);
+  transition: all 0.2s ease;
+}
+
+.schedule-item-dash:hover {
+  transform: translateX(5px);
+  background: rgba(79, 70, 229, 0.05);
+}
+
+.schedule-item-dash .time {
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.1);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}

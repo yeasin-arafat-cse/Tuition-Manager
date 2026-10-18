@@ -1,0 +1,86 @@
+/* Weekly Routine Setup */
+.routine-setup-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .routine-setup-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setup-sidebar {
+  background-color: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* ৭ দিনের রুটিন গ্রিড */
+.routine-days-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.day-row {
+  background-color: var(--bg-card);
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 120px 1fr 120px 120px;
+  gap: 1rem;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+@media (max-width: 600px) {
+  .day-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+.day-row:hover {
+  border-color: var(--primary);
+}
+
+.day-label {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.day-row input, .day-row select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+.day-row input:focus, .day-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-save-routine {
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.btn-save-routine:hover {
+  background-color: var(--primary-hover);
+}
