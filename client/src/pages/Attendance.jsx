@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import './Attendance.css';
 
-// 👈 লোকাল টাইম বের করার ফাংশন (বাংলাদেশের সময়)
+// লোকাল টাইম বের করার ফাংশন
 const getLocalDateString = () => {
   const d = new Date();
   const year = d.getFullYear();
@@ -20,7 +20,7 @@ const Attendance = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; 
   });
-  const [todayDate, setTodayDate] = useState(getLocalDateString()); // 👈 আজকের তারিখ স্টেটে রাখলাম
+  const [todayDate, setTodayDate] = useState(getLocalDateString()); 
   
   const { t } = useApp();
 
@@ -40,25 +40,23 @@ const Attendance = () => {
     fetchData();
   }, [selectedMonth]);
 
-  // 👈 নতুন: প্রতি ১০ সেকেন্ড পর পর তারিখ চেক করবে। রাত ১২টা পার হলে ডেটা রিফ্রেশ হবে।
+  // প্রতি ১০ সেকেন্ড পর পর তারিখ চেক করবে
   useEffect(() => {
     const interval = setInterval(() => {
       const currentDate = getLocalDateString();
       
-      // যদি আজকের তারিখ পরিবর্তন হয়ে যায় (অর্থাৎ রাত ১২টা পার হয়েছে)
       if (currentDate !== todayDate) {
-        setTodayDate(currentDate); // নতুন তারিখ সেট করা
-        setSelectedMonth(currentDate.substring(0, 7)); // মাস পিকার আপডেট করা
-        fetchData(); // ডেটা রিফ্রেশ করা
+        setTodayDate(currentDate); 
+        setSelectedMonth(currentDate.substring(0, 7)); 
+        fetchData(); 
         toast.success(t("New day started! Attendance refreshed.", "নতুন দিন শুরু হয়েছে! হাজিরা আপডেট হয়েছে।"));
       }
-    }, 10000); // ১০ সেকেন্ড পর পর চেক করবে
+    }, 10000); 
 
     return () => clearInterval(interval);
   }, [todayDate]);
 
   const handleAttendance = async (studentId, status) => {
-    // 👈 এখানেও লোকাল টাইম ব্যবহার করা হলো
     const today = todayDate; 
 
     setStudentCards(prev => prev.map(card => {
@@ -103,7 +101,13 @@ const Attendance = () => {
   return (
     <div className="animate-fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 className="page-title">{t("Attendance", "হাজিরা")}</h1>
+        <div>
+          <h1 className="page-title">{t("Attendance", "হাজিরা")}</h1>
+          {/* 👈 নতুন: স্ক্রিনে আজকের তারিখ দেখাবে */}
+          <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
+            {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
+          </p>
+        </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <label style={{ fontWeight: '600' }}>{t("Select Month:", "মাস সিলেক্ট করুন:")}</label>
