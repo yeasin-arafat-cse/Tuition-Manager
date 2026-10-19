@@ -1,9 +1,14 @@
-.attendance-header {
+.page-header {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
 }
 
 .date-input {
@@ -15,47 +20,99 @@
   font-size: 1rem;
 }
 
-.attendance-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* Attendance Cards Grid */
+.attendance-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.attendance-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.attendance-card {
   background-color: var(--bg-card);
-  padding: 1rem 1.5rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s ease;
 }
 
-.student-info h4 {
+.attendance-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.att-card-header {
+  padding: 1rem 1.2rem;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.att-card-header h3 {
   font-size: 1.1rem;
   color: var(--text-main);
+  margin-bottom: 0.2rem;
 }
 
-.student-info p {
+.att-card-header p {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
 
-.attendance-actions {
+.att-card-stats {
   display: flex;
-  gap: 0.5rem;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.stat-box {
+  flex: 1;
+  text-align: center;
+  padding: 0.8rem;
+  border-radius: 8px;
+}
+
+.stat-box.present {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--secondary);
+}
+
+.stat-box.absent {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.stat-box h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-box p {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.att-card-actions {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg-card);
 }
 
 .att-btn {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 0.9rem;
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
   border: 1px solid var(--border);
   background-color: var(--bg-main);
-  color: var(--text-muted);
+  color: var(--text-main);
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .att-btn.present.active {
@@ -71,9 +128,7 @@
 }
 
 @media (max-width: 500px) {
-  .attendance-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .attendance-cards-grid {
+    grid-template-columns: 1fr;
   }
 }

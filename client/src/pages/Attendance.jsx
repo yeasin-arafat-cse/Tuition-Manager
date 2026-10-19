@@ -5,37 +5,20 @@ import toast from 'react-hot-toast';
 import './Attendance.css';
 
 const Attendance = () => {
-  const [students, setStudents] = useState([]);
-  const [attendanceData, setAttendanceData] = useState({}); // { studentId: "present" | "absent" }
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [studentCards, setStudentCards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; 
+  });
   const { t } = useApp();
 
-  // ১. স্টুডেন্ট লিস্ট এবং নির্দিষ্ট তারিখের হাজিরা ফেচ করা
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [studentRes, attRes] = await Promise.all([
-        api.get('/students'),
-        api.get(`/attendance/date/${date}`)
-      ]);
-      
-      // স্টুডেন্ট লিস্ট সেট করা (যদি ডেটা না থাকে তবে খালি অ্যারে)
-      setStudents(studentRes.data.students || []);
-
-      // আগের হাজিরা ডাটাকে অবজেক্টে রূপান্তর করা (নিরাপদভাবে)
-      const existingAtt = {};
-      if (attRes.data && attRes.data.attendance) {
-        attRes.data.attendance.forEach(att => {
-          if (att.student && att.student._id) {
-            existingAtt[att.student._id] = att.status;
-          }
-        });
-      }
-      setAttendanceData(existingAtt);
-
+      const res = await api.get(`/attendance?month=${selectedMonth}`);
+      setStudentCards(res.data.studentCards);
     } catch (error) {
-      console.error("Attendance Error:", error); // কনসোল এ আসল এরর দেখতে পাবেন
       toast.error('Failed to load data');
     } finally {
       setIsLoading(false);
@@ -44,72 +27,124 @@ const Attendance = () => {
 
   useEffect(() => {
     fetchData();
-  }, [date]);
+  }, [selectedMonth]);
 
-  // হাজিরা পরিবর্তন করা
   const handleAttendance = async (studentId, status) => {
-    // লোকাল স্টেট আপডেট (ফাস্ট রেসপন্সের জন্য)
-    setAttendanceData(prev => ({ ...prev, [studentId]: status }));
+    const today = new Date().toISOString().split('T')[0];
+
+    setStudentCards(prev => prev.map(card => {
+      if (card._id === studentId) {
+        let newPresent = card.present;
+        let newAbsent = card.absent;
+
+        if (card.todayStatus === 'present' && status === 'absent') { newPresent--; newAbsent++; }
+        else if (card.todayStatus === 'absent' && status === 'present') { newAbsent--; newPresent++; }
+        else if (!card.todayStatus) {
+          if (status === 'present') newPresent++;
+          else newAbsent++;
+        }
+
+        return { ...card, todayStatus: status, present: newPresent, absent: newAbsent };
+      }
+      return card;
+    }));
 
     try {
       await api.post('/attendance', {
         studentId,
-        date,
+        date: today,
         status
       });
       toast.success(t("Attendance marked", "হাজিরা সেভ হয়েছে"));
     } catch (error) {
       toast.error('Failed to save attendance');
-      // এরর হলে আগের অবস্থায় ফিরিয়ে নেওয়া (Optional)
+      fetchData(); 
+    }
+  };
+
+  const handleDelete = async (studentId) => {
+    if (!window.confirm(t("Delete this month's attendance for this student?", "এই স্টুডেন্টের এই মাসের হাজিরা ডিলিট করবেন?"))) return;
+    try {
+      await api.delete(`/attendance/student/${studentId}/month/${selectedMonth}`);
+      toast.success(t("Deleted!", "ডিলিট হয়েছে!"));
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to delete');
     }
   };
 
   return (
     <div className="animate-fade-in">
-      <div className="attendance-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 className="page-title">{t("Attendance", "হাজিরা")}</h1>
-        <input 
-          type="date" 
-          className="date-input" 
-          value={date} 
-          onChange={(e) => setDate(e.target.value)} 
-        />
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontWeight: '600' }}>{t("Select Month:", "মাস সিলেক্ট করুন:")}</label>
+          <input 
+            type="month" 
+            className="date-input" 
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(e.target.value)} 
+          />
+        </div>
       </div>
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
-      ) : students.length === 0 ? (
+      ) : studentCards.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
           {t("No students found.", "কোনো স্টুডেন্ট পাওয়া যায়নি।")}
         </div>
       ) : (
-        <div className="attendance-list">
-          {students.map((student) => {
-            const currentStatus = attendanceData[student._id];
-
-            return (
-              <div key={student._id} className="attendance-item">
-                <div className="student-info">
-                  <h4>{student.name}</h4>
-                  <p>{student.class} - {student.subject}</p>
+        <div className="attendance-cards-grid">
+          {studentCards.map((card) => (
+            <div key={card._id} className="attendance-card">
+              <div className="att-card-header">
+                <div>
+                  <h3>{card.name}</h3>
+                  <p>{card.class}</p>
                 </div>
-                <div className="attendance-actions">
+                <button 
+                  onClick={() => handleDelete(card._id)}
+                  style={{ background: 'none', color: 'var(--danger)', fontSize: '1.2rem', cursor: 'pointer' }}
+                  title="Delete Month Data"
+                >
+                  🗑️
+                </button>
+              </div>
+
+              <div className="att-card-stats">
+                <div className="stat-box present">
+                  <h4>{card.present}</h4>
+                  <p>{t("Present", "উপস্থিত")}</p>
+                </div>
+                <div className="stat-box absent">
+                  <h4>{card.absent}</h4>
+                  <p>{t("Absent", "অনুপস্থিত")}</p>
+                </div>
+              </div>
+
+              <div className="att-card-actions">
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>
+                  {t("Mark Today's Attendance", "আজকের হাজিরা দিন")}
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
-                    className={`att-btn present ${currentStatus === 'present' ? 'active' : ''}`}
-                    onClick={() => handleAttendance(student._id, 'present')}
+                    className={`att-btn present ${card.todayStatus === 'present' ? 'active' : ''}`}
+                    onClick={() => handleAttendance(card._id, 'present')}
                   >
                     {t("Present", "উপস্থিত")}
                   </button>
                   <button 
-                    className={`att-btn absent ${currentStatus === 'absent' ? 'active' : ''}`}
-                    onClick={() => handleAttendance(student._id, 'absent')}
+                    className={`att-btn absent ${card.todayStatus === 'absent' ? 'active' : ''}`}
+                    onClick={() => handleAttendance(card._id, 'absent')}
                   >
                     {t("Absent", "অনুপস্থিত")}
                   </button>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

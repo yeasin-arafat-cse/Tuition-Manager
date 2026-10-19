@@ -1,7 +1,7 @@
 import Attendance from "../models/Attendance.js";
-import Student from "../models/Student.js"; // 👈 নতুন ইমপোর্ট
+import Student from "../models/Student.js";
 
-// @desc    Mark attendance (Present/Absent)
+// @desc    Mark attendance
 // @route   POST /api/attendance
 export const markAttendance = async (req, res) => {
   try {
@@ -20,19 +20,73 @@ export const markAttendance = async (req, res) => {
   }
 };
 
-// @desc    Get attendance by date (Teacher)
-// @route   GET /api/attendance/date/:date
-export const getAttendanceByDate = async (req, res) => {
+// @desc    Get attendance by Month (Card System)
+// @route   GET /api/attendance?month=YYYY-MM
+export const getMonthlyAttendance = async (req, res) => {
   try {
-    const date = new Date(req.params.date);
-    date.setHours(0, 0, 0, 0);
+    const { month } = req.query; 
+    let startDate, endDate;
 
-    const attendance = await Attendance.find({
+    if (month) {
+      const [year, monthNum] = month.split('-');
+      startDate = new Date(year, monthNum - 1, 1);
+      endDate = new Date(year, monthNum, 0); 
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+
+    const attendances = await Attendance.find({
       teacher: req.user._id,
-      date: date,
-    }).populate("student", "name class");
+      date: { $gte: startDate, $lte: endDate }
+    });
 
-    res.json({ success: true, attendance });
+    const students = await Student.find({ teacher: req.user._id, active: true });
+
+    const studentCards = students.map(student => {
+      const studentAtt = attendances.filter(a => a.student.toString() === student._id.toString());
+      
+      const present = studentAtt.filter(a => a.status === 'present').length;
+      const absent = studentAtt.filter(a => a.status === 'absent').length;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayRecord = studentAtt.find(a => new Date(a.date).getTime() === today.getTime());
+
+      return {
+        _id: student._id,
+        name: student.name,
+        class: student.class,
+        present,
+        absent,
+        totalDaysMarked: present + absent,
+        todayStatus: todayRecord ? todayRecord.status : null
+      };
+    });
+
+    res.json({ success: true, studentCards });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete attendance for a specific student in a specific month
+// @route   DELETE /api/attendance/student/:studentId/month/:month
+export const deleteMonthlyAttendance = async (req, res) => {
+  try {
+    const { studentId, month } = req.params; 
+    const [year, monthNum] = month.split('-');
+    const startDate = new Date(year, monthNum - 1, 1);
+    const endDate = new Date(year, monthNum, 0);
+
+    await Attendance.deleteMany({
+      teacher: req.user._id,
+      student: studentId,
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    res.json({ success: true, message: "Attendance deleted for this month" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
