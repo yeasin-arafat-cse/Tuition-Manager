@@ -21,7 +21,6 @@ const TeacherDashboard = () => {
   const { user } = useAuth(); 
 
   const fetchDashboard = async (range) => {
-    setIsLoading(true);
     try {
       const res = await api.get(`/dashboard/teacher?range=${range}`);
       setData(res.data.data);
@@ -34,17 +33,14 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboard(chartRange);
-
-    // 👈 নতুন: রাত ১২টার ইভেন্ট লিসেনার
-    const handleNewDay = () => {
+    
+    // 👈 প্রতি ১০ সেকেন্ড পর পর ডেটা অটো রিফ্রেশ হবে
+    const interval = setInterval(() => {
       setTodayDate(getLocalDateString());
       fetchDashboard(chartRange);
-    };
-    window.addEventListener('newDayStarted', handleNewDay);
+    }, 10000); 
 
-    return () => {
-      window.removeEventListener('newDayStarted', handleNewDay);
-    };
+    return () => clearInterval(interval);
   }, [chartRange]);
 
   if (isLoading && !data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;

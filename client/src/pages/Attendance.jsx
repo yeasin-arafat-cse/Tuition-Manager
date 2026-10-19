@@ -24,7 +24,6 @@ const Attendance = () => {
   const { t } = useApp();
 
   const fetchData = async () => {
-    setIsLoading(true);
     try {
       const res = await api.get(`/attendance?month=${selectedMonth}`);
       setStudentCards(res.data.studentCards);
@@ -38,19 +37,18 @@ const Attendance = () => {
   useEffect(() => {
     fetchData();
 
-    // 👈 নতুন: রাত ১২টার ইভেন্ট লিসেনার
-    const handleNewDay = () => {
+    // 👈 প্রতি ১০ সেকেন্ড পর পর ডেটা অটো রিফ্রেশ হবে
+    const interval = setInterval(() => {
       const newDate = getLocalDateString();
-      setTodayDate(newDate);
-      setSelectedMonth(newDate.substring(0, 7));
+      if (newDate !== todayDate) {
+        setTodayDate(newDate);
+        setSelectedMonth(newDate.substring(0, 7));
+      }
       fetchData();
-    };
-    window.addEventListener('newDayStarted', handleNewDay);
+    }, 10000); 
 
-    return () => {
-      window.removeEventListener('newDayStarted', handleNewDay);
-    };
-  }, [selectedMonth]);
+    return () => clearInterval(interval);
+  }, [selectedMonth, todayDate]);
 
   const handleAttendance = async (studentId, status) => {
     const today = todayDate; 
