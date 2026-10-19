@@ -51,12 +51,17 @@ const TeacherDashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
-  // 👈 ব্রাউজারের তারিখের ওপর ভিত্তি করে Today's Class ফিল্টার
+  // ব্রাউজারের তারিখের ওপর ভিত্তি করে Today's Class ফিল্টার
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const localDayName = daysOfWeek[new Date().getDay()];
   
-  // data.allSchedules থেকে আজকের দিনের ক্লাসগুলো ফিল্টার করা
-  const todayClasses = data?.allSchedules?.filter(schedule => schedule.day === localDayName) || [];
+  // 👈 অসম্পূর্ণ ক্লাস বাদ দেওয়ার লজিক
+  const todayClasses = data?.allSchedules?.filter(schedule => 
+    schedule.day === localDayName && 
+    schedule.student && 
+    schedule.subject && 
+    schedule.subject.trim() !== ''
+  ) || [];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
