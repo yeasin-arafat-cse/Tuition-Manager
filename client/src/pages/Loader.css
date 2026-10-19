@@ -1,0 +1,88 @@
+.loader-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end; /* 👈 টেক্সট নিচের দিকে রাখার জন্য */
+  height: 100vh;
+  width: 100vw;
+  padding-bottom: 8vh; /* 👈 নিচ থেকে একটু দূরত্ব */
+  
+  /* 👈 আপনার ছবির ব্যাকগ্রাউন্ড */
+  background-image: url('/loader-bg.jpg'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  font-family: 'Hind Siliguri', sans-serif;
+  text-align: center;
+}
+
+/* ছবির ওপর একটি হালকা কালো শেড, যাতে সাদা টেক্সট পরিষ্কার দেখা যায় */
+.loader-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8)); /* নিচের দিকে একটু বেশি ডার্ক */
+  z-index: 1;
+}
+
+/* টেক্সট কন্টেইনার যাতে শেডের ওপরে থাকে */
+.loader-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: slideUpFade 1s ease-out;
+}
+
+.loader-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+}
+
+.loader-text {
+  font-size: 1.1rem;
+  color: #dddddd;
+  animation: pulse 1.5s infinite;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1.5rem;
+  border-radius: 30px;
+  backdrop-filter: blur(5px);
+}
+
+/* টেক্সট নিচ থেকে উঠে আসার অ্যানিমেশন */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* মোবাইল স্ক্রিনের জন্য বিশেষ ডিজাইন */
+@media (max-width: 600px) {
+  .loader-title {
+    font-size: 1.5rem; /* মোবাইলে টাইটেল একটু ছোট হবে */
+    padding: 0 1rem;
+  }
+  
+  .loader-text {
+    font-size: 0.9rem; /* মোবাইলে টেক্সট একটু ছোট হবে */
+  }
+}

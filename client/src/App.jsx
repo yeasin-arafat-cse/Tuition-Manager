@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import api from './services/api'; // 👈 সার্ভার পিং করার জন্য
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Layout from './components/Layout';
@@ -19,11 +21,42 @@ import StudentAttendance from './pages/StudentAttendance';
 import StudentPayment from './pages/StudentPayment';
 import AdminDashboard from './pages/AdminDashboard';
 import GuardianDashboard from './pages/GuardianDashboard';
-import ProfileSettings from './pages/ProfileSettings'; // 👈 নতুন
+import ProfileSettings from './pages/ProfileSettings';
 import { useAuth } from './context/AuthContext';
+import './pages/Loader.css'; // 👈 নতুন CSS
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [serverReady, setServerReady] = useState(false);
+
+  // 👈 সার্ভার ওয়েক-আপ লজিক
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        // সার্ভার ঘুমিয়ে থাকলে এটি তাকে জাগিয়ে দিবে
+        await api.get('/health'); 
+      } catch (error) {
+        // এরর হলেও সমস্যা নেই, সার্ভার জেগে উঠবে
+      } finally {
+        setServerReady(true);
+      }
+    };
+    wakeUpServer();
+  }, []);
+
+  // 👈 সার্ভার জাগা পর্যন্ত বা ইউজার লোড হওয়া পর্যন্ত অ্যানিমেশন দেখাবে
+  if (!serverReady || loading) {
+    return (
+      <div className="loader-container">
+        <div className="loader-content">
+          <h1 className="loader-title">Welcome to our personal system</h1>
+          <div className="loader-text">
+            Waking up the server... Please wait ⏳
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -57,7 +90,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* Common Routes */}
-        <Route path="/settings" element={<ProfileSettings />} /> {/* 👈 নতুন */}
+        <Route path="/settings" element={<ProfileSettings />} />
 
       </Route>
 
