@@ -35,6 +35,11 @@ app.get("/", (req, res) => {
   res.json({ success: true, message: "🚀 Tuition Manager API running" });
 });
 
+// 👈 নতুন: Health Check Route (সার্ভার জাগিয়ে রাখার জন্য)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
@@ -46,7 +51,7 @@ app.use("/api/exams", examRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/guardian", guardianRoutes);
-app.use("/api/notices", noticeRoutes)
+app.use("/api/notices", noticeRoutes);
 
 // 404 handler
 app.use((req, res) => {
