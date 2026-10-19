@@ -53,7 +53,7 @@ export const getStudentPayments = async (req, res) => {
   }
 };
 
-// @desc    Calculate and Get All Dues
+// @desc    Calculate and Get All Dues (Based on 30-day cycles)
 // @route   GET /api/payments/due
 export const getDuePayments = async (req, res) => {
   try {
@@ -68,26 +68,41 @@ export const getDuePayments = async (req, res) => {
 
     const dueList = [];
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); 
-    const currentYear = currentDate.getFullYear();
+    currentDate.setHours(0, 0, 0, 0);
+    
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     students.forEach(student => {
       const joinDate = new Date(student.joinDate);
-      let joinMonth = joinDate.getMonth();
-      let joinYear = joinDate.getFullYear();
+      joinDate.setHours(0, 0, 0, 0);
 
-      while (joinYear < currentYear || (joinYear === currentYear && joinMonth <= currentMonth)) {
-        const monthName = monthNames[joinMonth];
+      // কত দিন পার হয়েছে
+      const diffTime = Math.abs(currentDate - joinDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // ৩০ দিন পর পর কতগুলো সাইকেল পার হয়েছে
+      let cyclesPassed = 0;
+      if (diffDays >= 30) {
+        cyclesPassed = Math.floor(diffDays / 30);
+      }
+
+      // প্রতিটি ৩০ দিনের জন্য Due চেক করা
+      for (let i = 1; i <= cyclesPassed; i++) {
+        const cycleDate = new Date(joinDate);
+        cycleDate.setDate(cycleDate.getDate() + (i * 30)); 
+
+        const monthName = monthNames[cycleDate.getMonth()];
+        const year = cycleDate.getFullYear();
+
         const isPaid = paidPayments.find(p => 
           p.student.toString() === student._id.toString() && 
           p.month === monthName && 
-          p.year === joinYear
+          p.year === year
         );
 
         if (!isPaid) {
           dueList.push({
-            _id: `${student._id}-${monthName}-${joinYear}`, 
+            _id: `${student._id}-${monthName}-${year}-${i}`, 
             student: {
               _id: student._id,
               name: student.name,
@@ -95,16 +110,10 @@ export const getDuePayments = async (req, res) => {
               guardianPhone: student.guardianPhone
             },
             month: monthName,
-            year: joinYear,
+            year: year,
             amount: student.monthlyFee,
             status: "due"
           });
-        }
-
-        joinMonth++;
-        if (joinMonth > 11) {
-          joinMonth = 0;
-          joinYear++;
         }
       }
     });

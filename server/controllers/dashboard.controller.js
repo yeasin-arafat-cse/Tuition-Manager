@@ -17,37 +17,43 @@ export const getTeacherDashboard = async (req, res) => {
     const students = await Student.find({ teacher: teacherId, active: true });
     const paidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
 
+    // 👈 নতুন Due লজিক (৩০ দিনের সাইকেল)
     let totalDue = 0;
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); 
-    const currentYear = currentDate.getFullYear();
+    currentDate.setHours(0, 0, 0, 0);
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     students.forEach(student => {
       const joinDate = new Date(student.joinDate);
-      let joinMonth = joinDate.getMonth();
-      let joinYear = joinDate.getFullYear();
+      joinDate.setHours(0, 0, 0, 0);
 
-      while (joinYear < currentYear || (joinYear === currentYear && joinMonth <= currentMonth)) {
-        const monthName = monthNames[joinMonth];
-        
+      const diffTime = Math.abs(currentDate - joinDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let cyclesPassed = 0;
+      if (diffDays >= 30) {
+        cyclesPassed = Math.floor(diffDays / 30);
+      }
+
+      for (let i = 1; i <= cyclesPassed; i++) {
+        const cycleDate = new Date(joinDate);
+        cycleDate.setDate(cycleDate.getDate() + (i * 30)); 
+
+        const monthName = monthNames[cycleDate.getMonth()];
+        const year = cycleDate.getFullYear();
+
         const isPaid = paidPayments.find(p => 
           p.student.toString() === student._id.toString() && 
           p.month === monthName && 
-          p.year === joinYear
+          p.year === year
         );
 
         if (!isPaid) {
           totalDue += student.monthlyFee;
         }
-
-        joinMonth++;
-        if (joinMonth > 11) {
-          joinMonth = 0;
-          joinYear++;
-        }
       }
     });
+    // 👈 Due লজিক শেষ
 
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const today = days[new Date().getDay()];
@@ -119,7 +125,6 @@ export const getStudentDashboard = async (req, res) => {
     const totalPresent = await Attendance.countDocuments({ student: studentProfile._id, status: "present" });
     const totalAbsent = await Attendance.countDocuments({ student: studentProfile._id, status: "absent" });
     
-    // 👈 নতুন: বর্তমান মাসের নাম
     const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
     const currentYearNum = new Date().getFullYear();
 
@@ -128,29 +133,39 @@ export const getStudentDashboard = async (req, res) => {
     const pendingExams = await Exam.countDocuments({ student: studentProfile._id, status: "pending" });
     const completedExams = await Exam.countDocuments({ student: studentProfile._id, status: "submitted" });
 
+    // 👈 নতুন Due লজিক (স্টুডেন্টের জন্য)
     let totalDue = 0;
     const paidPayments = await Payment.find({ student: studentProfile._id, status: "paid" });
     
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const joinDate = new Date(studentProfile.joinDate);
-    let joinMonth = joinDate.getMonth();
-    let joinYear = joinDate.getFullYear();
+    joinDate.setHours(0, 0, 0, 0);
 
-    while (joinYear < currentYearNum || (joinYear === currentYearNum && joinMonth <= new Date().getMonth())) {
-      const monthName = monthNames[joinMonth];
-      const isPaid = paidPayments.find(p => p.month === monthName && p.year === joinYear);
+    const diffTime = Math.abs(currentDate - joinDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let cyclesPassed = 0;
+    if (diffDays >= 30) {
+        cyclesPassed = Math.floor(diffDays / 30);
+    }
+
+    for (let i = 1; i <= cyclesPassed; i++) {
+      const cycleDate = new Date(joinDate);
+      cycleDate.setDate(cycleDate.getDate() + (i * 30)); 
+
+      const monthName = monthNames[cycleDate.getMonth()];
+      const year = cycleDate.getFullYear();
+
+      const isPaid = paidPayments.find(p => p.month === monthName && p.year === year);
 
       if (!isPaid) {
         totalDue += studentProfile.monthlyFee;
       }
-
-      joinMonth++;
-      if (joinMonth > 11) {
-        joinMonth = 0;
-        joinYear++;
-      }
     }
+    // 👈 Due লজিক শেষ
 
     const notices = await Notice.find({ teacher: studentProfile.teacher })
       .sort({ createdAt: -1 })
@@ -167,7 +182,7 @@ export const getStudentDashboard = async (req, res) => {
         attendance: {
           present: totalPresent,
           absent: totalAbsent,
-          monthName: currentMonthName, // 👈 মাসের নাম পাঠানো হলো
+          monthName: currentMonthName,
           year: currentYearNum
         },
         recentPayments,
