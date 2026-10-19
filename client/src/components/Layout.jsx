@@ -27,6 +27,7 @@ const Layout = () => {
         { name: t("AI MCQ", "এআই প্রশ্ন"), path: '/teacher/ai-mcq', icon: '🤖' },
         { name: t("Question Bank", "প্রশ্ন ব্যাংক"), path: '/teacher/question-bank', icon: '📚' },
         { name: t("Exams", "এক্সাম"), path: '/teacher/exams', icon: '📝' },
+        { name: t("Notice Board", "নোটিশ বোর্ড"), path: '/teacher/notices', icon: '📢' },
         { name: t("Settings", "সেটিংস"), path: '/settings', icon: '⚙️' },
       ];
     }

@@ -57,7 +57,6 @@ const GuardianDashboard = () => {
         </div>
       </div>
 
-      {/* Student Info Card */}
       <div className="dashboard-section" style={{ marginBottom: '2rem' }}>
         <h2 className="section-title">👤 {t("Student Info", "শিক্ষার্থীর তথ্য")}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
@@ -77,7 +76,6 @@ const GuardianDashboard = () => {
       </div>
 
       <div className="dashboard-grid">
-        {/* Attendance Summary */}
         <div className="stat-card">
           <div className="stat-icon success">✅</div>
           <div className="stat-info">
@@ -89,7 +87,6 @@ const GuardianDashboard = () => {
           </div>
         </div>
 
-        {/* Payment Status */}
         <div className="stat-card">
           <div className="stat-icon primary">💰</div>
           <div className="stat-info">
@@ -113,7 +110,6 @@ const GuardianDashboard = () => {
       </div>
 
       <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: '2rem' }}>
-        {/* Recent Attendance List (নতুন) */}
         <div className="dashboard-section">
           <h2 className="section-title">📅 {t("Recent Attendance", "সাম্প্রতিক হাজিরা")}</h2>
           {data.recentAttendance?.length === 0 ? (
@@ -132,7 +128,6 @@ const GuardianDashboard = () => {
           )}
         </div>
 
-        {/* Payment History Table */}
         <div className="dashboard-section">
           <h2 className="section-title">💳 {t("Payment History", "পেমেন্টের ইতিহাস")}</h2>
           <div style={{ marginTop: '1rem' }}>
@@ -165,6 +160,25 @@ const GuardianDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* 👈 নতুন নোটিশ সেকশন */}
+      {data.notices && data.notices.length > 0 && (
+        <div className="dashboard-section" style={{ marginTop: '2rem' }}>
+          <h2 className="section-title">📢 {t("Notice Board", "নোটিশ বোর্ড")}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            {data.notices.map(notice => (
+              <div key={notice._id} style={{ background: 'var(--bg-main)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
+                <h4 style={{ fontWeight: '600', marginBottom: '0.3rem' }}>{notice.title}</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  {new Date(notice.createdAt).toLocaleDateString()}
+                </p>
+                <p style={{ fontSize: '0.95rem' }}>{notice.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

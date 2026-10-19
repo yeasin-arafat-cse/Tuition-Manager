@@ -23,6 +23,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import GuardianDashboard from './pages/GuardianDashboard';
 import ProfileSettings from './pages/ProfileSettings';
 import StudentProfile from './pages/StudentProfile';
+import NoticeBoard from './pages/NoticeBoard';
 import { useAuth } from './context/AuthContext';
 import './pages/Loader.css'; // 👈 নতুন CSS
 
@@ -76,6 +77,7 @@ function App() {
         <Route path="/teacher/ai-mcq" element={<AIMCQ />} />
         <Route path="/teacher/question-bank" element={<QuestionBank />} />
         <Route path="/teacher/exams" element={<TeacherExam />} />
+        <Route path="/teacher/notices" element={<NoticeBoard />} />
 
         {/* Student Routes */}
         <Route path="/student/dashboard" element={<StudentDashboard />} />

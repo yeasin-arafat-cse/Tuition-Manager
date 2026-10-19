@@ -5,7 +5,6 @@ import Student from "../models/Student.js";
 // @route   POST /api/payments
 export const createPayment = async (req, res) => {
   try {
-    console.log("👉 Request Body:", req.body);
     const { studentId, months, year, amount, method } = req.body; 
     const teacherId = req.user._id;
 
@@ -13,23 +12,20 @@ export const createPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "No months selected" });
     }
 
-    // প্রতিটি সিলেক্ট করা মাসের জন্য পেমেন্ট তৈরি বা আপডেট করা
     for (const m of months) {
       let payment = await Payment.findOne({ teacher: teacherId, student: studentId, month: m, year });
 
       if (payment) {
-        // থাকলে আপডেট
         payment.amount = amount || payment.amount;
         payment.status = "paid"; 
         payment.method = method || payment.method;
         payment.paidDate = Date.now();
         await payment.save();
       } else {
-        // না থাকলে নতুন তৈরি
         await Payment.create({
           teacher: teacherId,
           student: studentId,
-          month: m, // 👈 এখানে প্রতিটি মাস আলাদা করে যাচ্ছে
+          month: m,
           year,
           amount: amount,
           status: "paid",
@@ -57,8 +53,8 @@ export const getStudentPayments = async (req, res) => {
   }
 };
 
-// @desc    Calculate and Get All Dues (Auto-generated based on join date)
-// @route   GET /api/payments/due?studentId=xxx
+// @desc    Calculate and Get All Dues
+// @route   GET /api/payments/due
 export const getDuePayments = async (req, res) => {
   try {
     const teacherId = req.user._id;
@@ -132,6 +128,27 @@ export const getMyPayments = async (req, res) => {
       .sort({ year: -1, month: -1 });
 
     res.json({ success: true, payments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete a payment
+// @route   DELETE /api/payments/:id
+export const deletePayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found" });
+    }
+
+    if (payment.teacher.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    await payment.deleteOne();
+    res.json({ success: true, message: "Payment deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

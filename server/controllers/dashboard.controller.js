@@ -3,13 +3,14 @@ import Payment from "../models/Payment.js";
 import Schedule from "../models/Schedule.js";
 import Exam from "../models/Exam.js";
 import Attendance from "../models/Attendance.js";
+import Notice from "../models/Notice.js"; // 👈 নতুন ইমপোর্ট
 
 // @desc    Get Teacher Dashboard Stats
-// @route   GET /api/dashboard/teacher?range=6months
+// @route   GET /api/dashboard/teacher
 export const getTeacherDashboard = async (req, res) => {
   try {
     const teacherId = req.user._id;
-    const range = req.query.range || '6months'; // 👈 ডিফল্ট ৬ মাস
+    const range = req.query.range || '6months';
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
@@ -24,7 +25,6 @@ export const getTeacherDashboard = async (req, res) => {
 
     const totalExams = await Exam.countDocuments({ teacher: teacherId });
 
-    // 👈 চার্ট ডেটা বের করার লজিক
     let monthsToFetch = 6;
     if (range === '1year') monthsToFetch = 12;
     if (range === '1month') monthsToFetch = 1;
@@ -55,7 +55,7 @@ export const getTeacherDashboard = async (req, res) => {
         .reduce((acc, curr) => acc + curr.amount, 0);
 
       incomeChartData.push({
-        name: `${mName} ${y.toString().slice(-2)}`, // যেমন: Jan 24
+        name: `${mName} ${y.toString().slice(-2)}`,
         income: monthlyIncome
       });
     }
@@ -78,7 +78,6 @@ export const getTeacherDashboard = async (req, res) => {
 // @desc    Get Student Dashboard Stats
 // @route   GET /api/dashboard/student
 export const getStudentDashboard = async (req, res) => {
-  // ... (স্টুডেন্ট ড্যাশবোর্ডের কোড আগের মতোই থাকবে)
   try {
     const studentProfile = await Student.findOne({ user: req.user._id });
     
@@ -121,6 +120,11 @@ export const getStudentDashboard = async (req, res) => {
       }
     }
 
+    // 👈 নতুন: স্টুডেন্টের টিচারের দেওয়া নোটিশগুলো আনা
+    const notices = await Notice.find({ teacher: studentProfile.teacher })
+      .sort({ createdAt: -1 })
+      .limit(3);
+
     res.json({
       success: true,
       data: {
@@ -138,7 +142,8 @@ export const getStudentDashboard = async (req, res) => {
         exams: {
           pending: pendingExams,
           completed: completedExams
-        }
+        },
+        notices // 👈 নোটিশ পাঠানো হলো
       }
     });
   } catch (error) {

@@ -12,20 +12,32 @@ const StudentProfile = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get(`/students/${id}/profile`);
+      setData(res.data);
+    } catch (error) {
+      toast.error('Failed to load profile');
+      navigate('/teacher/students');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get(`/students/${id}/profile`);
-        setData(res.data);
-      } catch (error) {
-        toast.error('Failed to load profile');
-        navigate('/teacher/students');
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchProfile();
   }, [id, navigate]);
+
+  const handleDeletePayment = async (paymentId) => {
+    if (!window.confirm(t("Are you sure you want to delete this payment?", "আপনি কি নিশ্চিত এই পেমেন্টটি ডিলিট করতে চান?"))) return;
+    try {
+      await api.delete(`/payments/${paymentId}`);
+      toast.success(t("Payment deleted!", "পেমেন্ট ডিলিট হয়েছে!"));
+      fetchProfile();
+    } catch (error) {
+      toast.error('Failed to delete payment');
+    }
+  };
 
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading Profile...</div>;
   if (!data) return <div>No data</div>;
@@ -84,22 +96,33 @@ const StudentProfile = () => {
           <table>
             <thead>
               <tr>
-                <th>{t("Month", "মাস")}</th>
+                <th>{t("Month/Year", "মাস/বছর")}</th>
                 <th>{t("Amount", "টাকা")}</th>
+                <th>{t("Date", "তারিখ")}</th>
                 <th>{t("Method", "মাধ্যম")}</th>
                 <th>{t("Status", "স্ট্যাটাস")}</th>
+                <th>{t("Action", "অ্যাকশন")}</th>
               </tr>
             </thead>
             <tbody>
               {payments.length === 0 ? (
-                <tr><td colSpan="4" style={{ textAlign: 'center' }}>No payments yet.</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center' }}>No payments yet.</td></tr>
               ) : (
                 payments.map(p => (
                   <tr key={p._id}>
                     <td>{p.month} {p.year}</td>
                     <td>৳ {p.amount}</td>
+                    <td>{p.paidDate ? new Date(p.paidDate).toLocaleDateString() : 'N/A'}</td>
                     <td style={{ textTransform: 'capitalize' }}>{p.method}</td>
                     <td><span className={`badge ${p.status === 'paid' ? 'paid' : 'due'}`}>{p.status}</span></td>
+                    <td>
+                      <button 
+                        onClick={() => handleDeletePayment(p._id)}
+                        style={{ color: 'var(--danger)', background: 'none', fontWeight: 'bold' }}
+                      >
+                        {t("Delete", "ডিলিট")}
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

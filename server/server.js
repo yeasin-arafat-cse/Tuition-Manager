@@ -13,7 +13,8 @@ import aiRoutes from "./routes/ai.routes.js";
 import examRoutes from "./routes/exam.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
-import guardianRoutes from "./routes/guardian.routes.js"; // 👈 নতুন
+import guardianRoutes from "./routes/guardian.routes.js";
+import noticeRoutes from "./routes/notice.routes.js";
 
 // Load env
 dotenv.config();
@@ -44,7 +45,8 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/guardian", guardianRoutes); // 👈 নতুন
+app.use("/api/guardian", guardianRoutes);
+app.use("/api/notices", noticeRoutes)
 
 // 404 handler
 app.use((req, res) => {

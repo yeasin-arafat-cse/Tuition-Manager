@@ -48,7 +48,6 @@ const StudentDashboard = () => {
 
       {/* Stats Cards */}
       <div className="dashboard-grid">
-        {/* Attendance Card */}
         <div className="stat-card" onClick={() => navigate('/student/attendance')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon success">✅</div>
           <div className="stat-info">
@@ -57,7 +56,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Due Card */}
         <div className="stat-card" onClick={() => navigate('/student/payments')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon danger">💸</div>
           <div className="stat-info">
@@ -68,7 +66,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Exams Card */}
         <div className="stat-card" onClick={() => navigate('/student/exams')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon primary">📝</div>
           <div className="stat-info">
@@ -77,7 +74,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Routine Card */}
         <div className="stat-card" onClick={() => navigate('/student/schedule')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon warning" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>📅</div>
           <div className="stat-info">
@@ -88,7 +84,6 @@ const StudentDashboard = () => {
       </div>
 
       <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        {/* Recent Payments List */}
         <div className="dashboard-section">
           <h2 className="section-title">📅 {t("Recent Payments", "সাম্প্রতিক পেমেন্ট")}</h2>
           {data.recentPayments.length === 0 ? (
@@ -109,7 +104,6 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* Profile Info */}
         <div className="dashboard-section">
           <h2 className="section-title">👤 {t("My Profile", "আমার প্রোফাইল")}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
@@ -119,6 +113,25 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* 👈 নতুন নোটিশ সেকশন */}
+      {data.notices && data.notices.length > 0 && (
+        <div className="dashboard-section" style={{ marginTop: '2rem' }}>
+          <h2 className="section-title">📢 {t("Notice Board", "নোটিশ বোর্ড")}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            {data.notices.map(notice => (
+              <div key={notice._id} style={{ background: 'var(--bg-main)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
+                <h4 style={{ fontWeight: '600', marginBottom: '0.3rem' }}>{notice.title}</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  {new Date(notice.createdAt).toLocaleDateString()}
+                </p>
+                <p style={{ fontSize: '0.95rem' }}>{notice.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
