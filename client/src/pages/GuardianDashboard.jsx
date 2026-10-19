@@ -119,8 +119,16 @@ const GuardianDashboard = () => {
               {data.recentAttendance?.map((att) => (
                 <li key={att._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem 0', borderBottom: '1px solid var(--border)' }}>
                   <span>{new Date(att.date).toLocaleDateString()}</span>
-                  <span className={`badge ${att.status === 'present' ? 'paid' : 'due'}`}>
-                    {att.status.toUpperCase()}
+                  <span 
+                    className={`badge ${
+                      att.status === 'present' ? 'paid' : 
+                      att.status === 'absent' ? 'due' : ''
+                    }`}
+                    style={att.status === 'off_day' ? { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', padding: '0.3rem 0.8rem', borderRadius: '20px', fontWeight: '600' } : {}}
+                  >
+                    {att.status === 'present' ? t("Present", "উপস্থিত") : 
+                     att.status === 'absent' ? t("Absent", "অনুপস্থিত") : 
+                     t("Off Day", "ছুটি")}
                   </span>
                 </li>
               ))}
@@ -161,7 +169,6 @@ const GuardianDashboard = () => {
         </div>
       </div>
 
-      {/* 👈 নতুন নোটিশ সেকশন */}
       {data.notices && data.notices.length > 0 && (
         <div className="dashboard-section" style={{ marginTop: '2rem' }}>
           <h2 className="section-title">📢 {t("Notice Board", "নোটিশ বোর্ড")}</h2>

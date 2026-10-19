@@ -36,15 +36,19 @@ const Attendance = () => {
       if (card._id === studentId) {
         let newPresent = card.present;
         let newAbsent = card.absent;
+        let newOffDay = card.offDay || 0;
 
-        if (card.todayStatus === 'present' && status === 'absent') { newPresent--; newAbsent++; }
-        else if (card.todayStatus === 'absent' && status === 'present') { newAbsent--; newPresent++; }
-        else if (!card.todayStatus) {
-          if (status === 'present') newPresent++;
-          else newAbsent++;
-        }
+        // আগের স্ট্যাটাস বাদ দেওয়া
+        if (card.todayStatus === 'present') newPresent--;
+        if (card.todayStatus === 'absent') newAbsent--;
+        if (card.todayStatus === 'off_day') newOffDay--;
 
-        return { ...card, todayStatus: status, present: newPresent, absent: newAbsent };
+        // নতুন স্ট্যাটাস যোগ করা
+        if (status === 'present') newPresent++;
+        else if (status === 'absent') newAbsent++;
+        else if (status === 'off_day') newOffDay++;
+
+        return { ...card, todayStatus: status, present: newPresent, absent: newAbsent, offDay: newOffDay };
       }
       return card;
     }));
@@ -122,24 +126,34 @@ const Attendance = () => {
                   <h4>{card.absent}</h4>
                   <p>{t("Absent", "অনুপস্থিত")}</p>
                 </div>
+                <div className="stat-box off-day">
+                  <h4>{card.offDay || 0}</h4>
+                  <p>{t("Off Day", "ছুটি")}</p>
+                </div>
               </div>
 
               <div className="att-card-actions">
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>
                   {t("Mark Today's Attendance", "আজকের হাজিরা দিন")}
                 </p>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.3rem' }}>
                   <button 
                     className={`att-btn present ${card.todayStatus === 'present' ? 'active' : ''}`}
                     onClick={() => handleAttendance(card._id, 'present')}
                   >
-                    {t("Present", "উপস্থিত")}
+                    {t("Present", "P")}
                   </button>
                   <button 
                     className={`att-btn absent ${card.todayStatus === 'absent' ? 'active' : ''}`}
                     onClick={() => handleAttendance(card._id, 'absent')}
                   >
-                    {t("Absent", "অনুপস্থিত")}
+                    {t("Absent", "A")}
+                  </button>
+                  <button 
+                    className={`att-btn off-day ${card.todayStatus === 'off_day' ? 'active' : ''}`}
+                    onClick={() => handleAttendance(card._id, 'off_day')}
+                  >
+                    {t("Off", "O")}
                   </button>
                 </div>
               </div>

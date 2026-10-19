@@ -6,6 +6,7 @@ import './Students.css';
 
 const StudentAttendance = () => {
   const [attendance, setAttendance] = useState([]);
+  const [totalOffDays, setTotalOffDays] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useApp();
 
@@ -14,6 +15,7 @@ const StudentAttendance = () => {
       try {
         const res = await api.get('/attendance/my-attendance');
         setAttendance(res.data.attendance);
+        setTotalOffDays(res.data.totalOffDays || 0); 
       } catch (error) {
         toast.error('Failed to load attendance');
       } finally {
@@ -27,8 +29,12 @@ const StudentAttendance = () => {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 className="page-title">{t("My Attendance", "আমার উপস্থিতি")}</h1>
+        
+        <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.5rem 1rem', borderRadius: '8px', color: 'var(--warning)', fontWeight: 'bold' }}>
+          {t("Total Off Days:", "মোট ছুটি:")} {totalOffDays}
+        </div>
       </div>
 
       <div className="table-container">
@@ -51,8 +57,16 @@ const StudentAttendance = () => {
                 <tr key={att._id}>
                   <td>{new Date(att.date).toLocaleDateString()}</td>
                   <td>
-                    <span className={`badge ${att.status === 'present' ? 'paid' : 'due'}`}>
-                      {att.status === 'present' ? t("Present", "উপস্থিত") : t("Absent", "অনুপস্থিত")}
+                    <span 
+                      className={`badge ${
+                        att.status === 'present' ? 'paid' : 
+                        att.status === 'absent' ? 'due' : ''
+                      }`}
+                      style={att.status === 'off_day' ? { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', padding: '0.3rem 0.8rem', borderRadius: '20px', fontWeight: '600' } : {}}
+                    >
+                      {att.status === 'present' ? t("Present", "উপস্থিত") : 
+                       att.status === 'absent' ? t("Absent", "অনুপস্থিত") : 
+                       t("Off Day", "ছুটি")}
                     </span>
                   </td>
                 </tr>

@@ -18,14 +18,13 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["present", "absent"],
+      enum: ["present", "absent", "off_day"], // 👈 off_day যুক্ত করা হলো
       required: true,
     },
   },
   { timestamps: true }
 );
 
-// একই দিনে একই স্টুডেন্টের জন্য একবারই অ্যাটেনডেন্স সেভ হবে
 attendanceSchema.index({ student: 1, date: 1 }, { unique: true });
 
 const Attendance = mongoose.model("Attendance", attendanceSchema);

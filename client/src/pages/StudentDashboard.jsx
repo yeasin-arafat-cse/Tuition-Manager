@@ -48,10 +48,11 @@ const StudentDashboard = () => {
 
       {/* Stats Cards */}
       <div className="dashboard-grid">
+        {/* 👈 হাজিরার কার্ডে মাসের নাম যুক্ত করা হলো */}
         <div className="stat-card" onClick={() => navigate('/student/attendance')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon success">✅</div>
           <div className="stat-info">
-            <h3>{t("Attendance", "উপস্থিতি")}</h3>
+            <h3>{t("Attendance", "উপস্থিতি")} ({data.attendance.monthName})</h3>
             <h2>{data.attendance.present} <span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/ {data.attendance.present + data.attendance.absent}</span></h2>
           </div>
         </div>
@@ -114,7 +115,6 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* 👈 নতুন নোটিশ সেকশন */}
       {data.notices && data.notices.length > 0 && (
         <div className="dashboard-section" style={{ marginTop: '2rem' }}>
           <h2 className="section-title">📢 {t("Notice Board", "নোটিশ বোর্ড")}</h2>

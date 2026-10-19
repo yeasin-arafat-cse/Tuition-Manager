@@ -49,6 +49,7 @@ export const getMonthlyAttendance = async (req, res) => {
       
       const present = studentAtt.filter(a => a.status === 'present').length;
       const absent = studentAtt.filter(a => a.status === 'absent').length;
+      const offDay = studentAtt.filter(a => a.status === 'off_day').length; // 👈 Off Day
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -60,7 +61,7 @@ export const getMonthlyAttendance = async (req, res) => {
         class: student.class,
         present,
         absent,
-        totalDaysMarked: present + absent,
+        offDay, // 👈 Off Day পাঠানো হলো
         todayStatus: todayRecord ? todayRecord.status : null
       };
     });
@@ -104,7 +105,10 @@ export const getMyAttendance = async (req, res) => {
     const attendance = await Attendance.find({ student: studentProfile._id })
       .sort({ date: -1 });
 
-    res.json({ success: true, attendance });
+    // 👈 নতুন: মোট কতদিন ছুটি ছিল তা হিসাব করা
+    const totalOffDays = await Attendance.countDocuments({ student: studentProfile._id, status: "off_day" });
+
+    res.json({ success: true, attendance, totalOffDays });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

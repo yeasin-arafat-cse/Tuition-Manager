@@ -14,7 +14,6 @@ export const getTeacherDashboard = async (req, res) => {
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
-    // 👈 নতুন: Due হিসাব করার সঠিক পদ্ধতি
     const students = await Student.find({ teacher: teacherId, active: true });
     const paidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
 
@@ -119,6 +118,10 @@ export const getStudentDashboard = async (req, res) => {
 
     const totalPresent = await Attendance.countDocuments({ student: studentProfile._id, status: "present" });
     const totalAbsent = await Attendance.countDocuments({ student: studentProfile._id, status: "absent" });
+    
+    // 👈 নতুন: বর্তমান মাসের নাম
+    const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
+    const currentYearNum = new Date().getFullYear();
 
     const recentPayments = await Payment.find({ student: studentProfile._id }).sort({ createdAt: -1 }).limit(5);
 
@@ -128,16 +131,13 @@ export const getStudentDashboard = async (req, res) => {
     let totalDue = 0;
     const paidPayments = await Payment.find({ student: studentProfile._id, status: "paid" });
     
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); 
-    const currentYear = currentDate.getFullYear();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const joinDate = new Date(studentProfile.joinDate);
     let joinMonth = joinDate.getMonth();
     let joinYear = joinDate.getFullYear();
 
-    while (joinYear < currentYear || (joinYear === currentYear && joinMonth <= currentMonth)) {
+    while (joinYear < currentYearNum || (joinYear === currentYearNum && joinMonth <= new Date().getMonth())) {
       const monthName = monthNames[joinMonth];
       const isPaid = paidPayments.find(p => p.month === monthName && p.year === joinYear);
 
@@ -166,7 +166,9 @@ export const getStudentDashboard = async (req, res) => {
         },
         attendance: {
           present: totalPresent,
-          absent: totalAbsent
+          absent: totalAbsent,
+          monthName: currentMonthName, // 👈 মাসের নাম পাঠানো হলো
+          year: currentYearNum
         },
         recentPayments,
         totalDue,
