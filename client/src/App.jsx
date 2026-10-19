@@ -37,6 +37,7 @@ function App() {
       try {
         await api.get('/health'); 
       } catch (error) {
+        // এরর হলেও সমস্যা নেই
       } finally {
         setServerReady(true);
       }
@@ -44,18 +45,21 @@ function App() {
     wakeUpServer();
   }, []);
 
-  // 👈 নতুন: রাত ১২টায় ডেটা আপডেট করার লজিক
+  // 👈 নতুন: দিন পরিবর্তন (Date Change) ডিটেক্ট করার লজিক
   useEffect(() => {
-    const checkMidnight = () => {
-      const now = new Date();
-      // যদি ঘণ্টা ০ (রাত ১২টা), মিনিট ০, সেকেন্ড ০ হয়
-      if (now.getHours() === 0 && now.getMinutes() === 0) {
-        // পেজ রিফ্রেশ না করে শুধু একটি ইভেন্ট পাঠাবে
-        window.dispatchEvent(new Event('newDayStarted'));
-      }
-    };
+    // শুরুতে বর্তমান তারিখ সেভ করে রাখি
+    let lastKnownDate = new Date().toDateString();
 
-    const interval = setInterval(checkMidnight, 10000); // প্রতি ১০ সেকেন্ড পর পর চেক করবে
+    const interval = setInterval(() => {
+      const currentDate = new Date().toDateString(); // যেমন: "Tue Oct 20 2026"
+      
+      // যদি আজকের তারিখ আগের তারিখের সাথে না মেলে (অর্থাৎ দিন পরিবর্তন হয়েছে)
+      if (currentDate !== lastKnownDate) {
+        lastKnownDate = currentDate; // নতুন তারিখ সেট করা
+        window.dispatchEvent(new Event('newDayStarted')); // ইভেন্ট পাঠানো
+        console.log("New day detected! Dispatching event..."); 
+      }
+    }, 5000); // প্রতি ৫ সেকেন্ড পর পর চেক করবে
 
     return () => clearInterval(interval);
   }, []);
