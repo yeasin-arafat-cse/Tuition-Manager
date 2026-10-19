@@ -33,21 +33,30 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboard(chartRange);
-    
-    // 👈 প্রতি ১০ সেকেন্ড পর পর ডেটা অটো রিফ্রেশ হবে
+
+    // প্রতি ১০ সেকেন্ড পর পর ব্রাউজারের তারিখ চেক করবে
     const interval = setInterval(() => {
-      setTodayDate(getLocalDateString());
-      fetchDashboard(chartRange);
+      const currentLocalDate = getLocalDateString();
+      if (currentLocalDate !== todayDate) {
+        setTodayDate(currentLocalDate);
+        fetchDashboard(chartRange); // ডেটা রিফ্রেশ
+      }
     }, 10000); 
 
     return () => clearInterval(interval);
-  }, [chartRange]);
+  }, [chartRange, todayDate]);
 
   if (isLoading && !data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
   if (!data) return <div>Error loading data</div>;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+
+  // 👈 ব্রাউজারের তারিখের ওপর ভিত্তি করে Today's Class ফিল্টার
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const localDayName = daysOfWeek[new Date().getDay()];
+  
+  const todayClasses = data?.todaySchedules?.filter(schedule => schedule.day === localDayName) || [];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -136,10 +145,10 @@ const TeacherDashboard = () => {
       {/* Today's Schedule */}
       <div className="dashboard-section">
         <h2 className="section-title">
-          <span style={{ fontSize: '1.4rem' }}>📅</span> {t("Today's Classes", "আজকের ক্লাস")}
+          <span style={{ fontSize: '1.4rem' }}>📅</span> {t("Today's Classes", "আজকের ক্লাস")} ({localDayName})
         </h2>
         
-        {data.todaySchedules.length === 0 ? (
+        {todayClasses.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>☕</div>
             <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("No classes today!", "আজ কোনো ক্লাস নেই!")}</h3>
@@ -147,7 +156,7 @@ const TeacherDashboard = () => {
           </div>
         ) : (
           <div>
-            {data.todaySchedules.map((schedule) => (
+            {todayClasses.map((schedule) => (
               <div key={schedule._id} className="schedule-item-dash">
                 <div>
                   <h4 style={{ fontWeight: 700, fontSize: '1.05rem' }}>{schedule.student?.name}</h4>
