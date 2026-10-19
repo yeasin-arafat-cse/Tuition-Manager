@@ -5,16 +5,11 @@ import { useApp } from '../context/AppContext';
 import './Layout.css';
 
 const Layout = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth(); // 👈 logout এখান থেকে সরিয়ে নেওয়া হয়েছে
   const { theme, toggleTheme, toggleLanguage, t } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const getMenuItems = () => {
     if (user?.role === 'teacher') {
@@ -50,7 +45,7 @@ const Layout = () => {
     if (user?.role === 'admin') {
       return [
         { name: t("Admin Panel", "অ্যাডমিন প্যানেল"), path: '/admin/dashboard', icon: '👑' },
-        { name: t("Settings", "সেটিংস"), path: '/settings', icon: '⚙️' }, // 👈 অ্যাডমিনের সেটিংস
+        { name: t("Settings", "সেটিংস"), path: '/settings', icon: '⚙️' },
       ];
     }
     return [];
@@ -100,9 +95,7 @@ const Layout = () => {
             <button className="icon-btn ripple-btn" onClick={toggleLanguage} title="Change Language">
               {t("BN", "EN")}
             </button>
-            <button onClick={handleLogout} className="logout-btn ripple-btn">
-              <span>🚪</span> <span>{t("Logout", "লগআউট")}</span>
-            </button>
+            {/* 👈 Logout বাটনটি এখান থেকে মুছে ফেলা হয়েছে */}
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 👈 নতুন ইমপোর্ট
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
@@ -6,8 +7,9 @@ import toast from 'react-hot-toast';
 import './Students.css'; 
 
 const ProfileSettings = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth(); // 👈 logout ফাংশন নিন
   const { t } = useApp();
+  const navigate = useNavigate(); // 👈 navigate নিন
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -30,13 +32,11 @@ const ProfileSettings = () => {
       const res = await api.put('/auth/profile', profileData);
       toast.success(t("Profile updated successfully!", "প্রোফাইল আপডেট হয়েছে!"));
       
-      // লোকাল স্টোরেজে ইউজারের নাম আপডেট করা
       const currentUser = JSON.parse(localStorage.getItem('user'));
       if (currentUser) {
         currentUser.name = res.data.user.name;
         localStorage.setItem('user', JSON.stringify(currentUser));
       }
-      // পেজ রিফ্রেশ না করে নেভবার আপডেট করার জন্য
       window.location.reload(); 
     } catch (error) {
       toast.error('Failed to update profile');
@@ -64,6 +64,12 @@ const ProfileSettings = () => {
     } finally {
       setIsUpdatingPassword(false);
     }
+  };
+
+  // 👈 নতুন: Logout হ্যান্ডলার
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -148,6 +154,29 @@ const ProfileSettings = () => {
             </button>
           </form>
         </div>
+      </div>
+
+      {/* 👈 নতুন: Logout সেকশন */}
+      <div className="dashboard-section" style={{ marginTop: '2rem', border: '1px solid var(--danger)' }}>
+        <h2 className="section-title" style={{ color: 'var(--danger)' }}>⚠️ {t("Danger Zone", "সতর্কতা")}</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          {t("Once you log out, you will need to enter your credentials to access your account.", "লগআউট করলে আবার ঢুকতে হলে আপনার ইমেইল ও পাসওয়ার্ড দিতে হবে।")}
+        </p>
+        <button 
+          onClick={handleLogout}
+          style={{ 
+            backgroundColor: 'var(--danger)', 
+            color: 'white', 
+            padding: '0.8rem 2rem', 
+            borderRadius: '8px', 
+            fontWeight: 'bold', 
+            border: 'none', 
+            cursor: 'pointer',
+            transition: 'all 0.3s'
+          }}
+        >
+          🚪 {t("Logout Now", "লগআউট করুন")}
+        </button>
       </div>
     </div>
   );
