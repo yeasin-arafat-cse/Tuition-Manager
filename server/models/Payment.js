@@ -14,11 +14,11 @@ const paymentSchema = new mongoose.Schema(
     },
     month: {
       type: String,
-      required: true, // যেমন: "January", "February"
+      // 👈 এখানে required: true একদম থাকবে না
     },
     year: {
       type: Number,
-      required: true, // যেমন: 2026
+      required: true,
     },
     amount: {
       type: Number,
@@ -41,8 +41,8 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// একই মাসে একই স্টুডেন্টের জন্য একবারই পেমেন্ট রেকর্ড থাকবে
-paymentSchema.index({ student: 1, month: 1, year: 1 }, { unique: true });
+// ⚠️ এই লাইনটি সাময়িকভাবে মুছে ফেলুন বা কমেন্ট করে দিন
+// paymentSchema.index({ student: 1, month: 1, year: 1 }, { unique: true });
 
 const Payment = mongoose.model("Payment", paymentSchema);
 export default Payment;

@@ -18,11 +18,13 @@ const Payment = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [paymentData, setPaymentData] = useState({
-    month: new Date().toLocaleString('en-US', { month: 'long' }),
+    months: [new Date().toLocaleString('en-US', { month: 'long' })], 
     year: new Date().getFullYear(),
     amount: '',
     method: 'cash'
   });
+
+  const allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -59,12 +61,24 @@ const Payment = () => {
     const studentInfo = studentData.student || studentData; 
     
     setPaymentData({
-      ...paymentData,
+      months: [studentData.month || new Date().toLocaleString('en-US', { month: 'long' })], 
+      year: studentData.year || new Date().getFullYear(),
       amount: studentInfo.monthlyFee || 0,
-      month: studentData.month || paymentData.month,
-      year: studentData.year || paymentData.year
+      method: 'cash'
     });
     setIsModalOpen(true);
+  };
+
+  const handleMonthToggle = (month) => {
+    setPaymentData(prev => {
+      const isSelected = prev.months.includes(month);
+      if (isSelected) {
+        if (prev.months.length === 1) return prev;
+        return { ...prev, months: prev.months.filter(m => m !== month) };
+      } else {
+        return { ...prev, months: [...prev.months, month] };
+      }
+    });
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -74,8 +88,10 @@ const Payment = () => {
       const studentId = selectedStudent.student ? selectedStudent.student._id : selectedStudent._id;
       await api.post('/payments', {
         studentId: studentId,
-        ...paymentData,
-        status: 'paid'
+        months: paymentData.months,
+        year: paymentData.year,
+        amount: paymentData.amount,
+        method: paymentData.method
       });
       toast.success(t("Payment Successful!", "পেমেন্ট সফল হয়েছে!"));
       setIsModalOpen(false);
@@ -87,45 +103,10 @@ const Payment = () => {
     }
   };
 
-  // 👈 নতুন ফাংশন: পেমেন্ট সিএসভি ডাউনলোড
-  const downloadPaymentCSV = () => {
-    const dataToExport = activeTab === 'due' ? duePayments : allStudents;
-    
-    if (dataToExport.length === 0) return toast.error("No data to export");
-
-    let csvContent = "Student Name,Class,Month,Year,Amount,Status\n";
-
-    if (activeTab === 'due') {
-      dataToExport.forEach(p => {
-        csvContent += `"${p.student.name}","${p.student.class}","${p.month}",${p.year},${p.amount},"${p.status}"\n`;
-      });
-    } else {
-      dataToExport.forEach(s => {
-        csvContent += `"${s.name}","${s.class}","-","-",${s.monthlyFee},"Active"\n`;
-      });
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Payments_Report_${Date.now()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success(t("Exported successfully!", "এক্সপোর্ট সফল হয়েছে!"));
-  };
-
   return (
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t("Payments", "পেমেন্ট সমূহ")}</h1>
-        <button 
-          className="btn-cancel" 
-          onClick={downloadPaymentCSV}
-          style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-main)', display: 'flex', gap: '5px', alignItems: 'center' }}
-        >
-          📥 {t("Export Report", "রিপোর্ট ডাউনলোড")}
-        </button>
       </div>
 
       <div className="payment-tabs">
@@ -231,35 +212,54 @@ const Payment = () => {
             </p>
 
             <form onSubmit={handlePaymentSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t("Month", "মাস")}</label>
-                  <select name="month" value={paymentData.month} onChange={(e) => setPaymentData({...paymentData, month: e.target.value})}>
-                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>{t("Year", "বছর")}</label>
-                  <input type="number" value={paymentData.year} onChange={(e) => setPaymentData({...paymentData, year: e.target.value})} required />
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>{t("Select Months (Click to toggle)", "মাস সিলেক্ট করুন (একাধিক নিতে পারেন)")}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px', marginTop: '0.5rem' }}>
+                  {allMonths.map(m => (
+                    <div 
+                      key={m} 
+                      onClick={() => handleMonthToggle(m)}
+                      style={{
+                        padding: '0.4rem',
+                        textAlign: 'center',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        border: '1px solid var(--border)',
+                        backgroundColor: paymentData.months.includes(m) ? 'var(--primary)' : 'var(--bg-main)',
+                        color: paymentData.months.includes(m) ? 'white' : 'var(--text-main)',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {m.slice(0, 3)}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>{t("Amount (৳)", "টাকার পরিমাণ (৳)")}</label>
-                  <input type="number" value={paymentData.amount} onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})} required />
+                  <label>{t("Year", "বছর")}</label>
+                  <input type="number" value={paymentData.year} onChange={(e) => setPaymentData({...paymentData, year: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label>{t("Method", "মাধ্যম")}</label>
-                  <select name="method" value={paymentData.method} onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}>
-                    <option value="cash">{t("Cash", "ক্যাশ")}</option>
-                    <option value="bkash">bKash</option>
-                    <option value="nagad">Nagad</option>
-                    <option value="bank">{t("Bank", "ব্যাংক")}</option>
-                  </select>
+                  <label>{t("Amount per month (৳)", "প্রতি মাসের টাকা (৳)")}</label>
+                  <input type="number" value={paymentData.amount} onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})} required />
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>{t("Method", "মাধ্যম")}</label>
+                <select name="method" value={paymentData.method} onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}>
+                  <option value="cash">{t("Cash", "ক্যাশ")}</option>
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="bank">{t("Bank", "ব্যাংক")}</option>
+                </select>
+              </div>
+
+              <div style={{ marginTop: '1rem', textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.2rem' }}>
+                {t("Total Amount:", "মোট টাকা:")} ৳ {paymentData.amount * paymentData.months.length}
               </div>
 
               <div className="btn-group">

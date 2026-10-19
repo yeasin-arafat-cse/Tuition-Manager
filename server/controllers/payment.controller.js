@@ -1,43 +1,51 @@
 import Payment from "../models/Payment.js";
 import Student from "../models/Student.js";
 
-// @desc    Create or Update Payment
+// @desc    Create or Update Payment (Supports Multiple Months)
 // @route   POST /api/payments
 export const createPayment = async (req, res) => {
   try {
-    const { studentId, month, year, amount, status, method } = req.body;
+    console.log("👉 Request Body:", req.body);
+    const { studentId, months, year, amount, method } = req.body; 
     const teacherId = req.user._id;
 
-    let payment = await Payment.findOne({ teacher: teacherId, student: studentId, month, year });
-
-    if (payment) {
-      payment.amount = amount || payment.amount;
-      payment.status = status || payment.status;
-      payment.method = method || payment.method;
-      if (status === "paid") payment.paidDate = Date.now();
-      
-      await payment.save();
-      return res.status(200).json({ success: true, message: "Payment updated", payment });
+    if (!Array.isArray(months) || months.length === 0) {
+      return res.status(400).json({ success: false, message: "No months selected" });
     }
 
-    payment = await Payment.create({
-      teacher: teacherId,
-      student: studentId,
-      month,
-      year,
-      amount,
-      status: status || "due",
-      method: method || "cash",
-      paidDate: status === "paid" ? Date.now() : null,
-    });
+    // প্রতিটি সিলেক্ট করা মাসের জন্য পেমেন্ট তৈরি বা আপডেট করা
+    for (const m of months) {
+      let payment = await Payment.findOne({ teacher: teacherId, student: studentId, month: m, year });
 
-    res.status(201).json({ success: true, payment });
+      if (payment) {
+        // থাকলে আপডেট
+        payment.amount = amount || payment.amount;
+        payment.status = "paid"; 
+        payment.method = method || payment.method;
+        payment.paidDate = Date.now();
+        await payment.save();
+      } else {
+        // না থাকলে নতুন তৈরি
+        await Payment.create({
+          teacher: teacherId,
+          student: studentId,
+          month: m, // 👈 এখানে প্রতিটি মাস আলাদা করে যাচ্ছে
+          year,
+          amount: amount,
+          status: "paid",
+          method: method || "cash",
+          paidDate: Date.now(),
+        });
+      }
+    }
+
+    res.status(201).json({ success: true, message: "Payments collected successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get all payments of a student (Teacher)
+// @desc    Get all payments of a student
 // @route   GET /api/payments/student/:studentId
 export const getStudentPayments = async (req, res) => {
   try {
@@ -49,8 +57,8 @@ export const getStudentPayments = async (req, res) => {
   }
 };
 
-// @desc    Calculate and Get All Dues (Teacher)
-// @route   GET /api/payments/due
+// @desc    Calculate and Get All Dues (Auto-generated based on join date)
+// @route   GET /api/payments/due?studentId=xxx
 export const getDuePayments = async (req, res) => {
   try {
     const teacherId = req.user._id;

@@ -1,5 +1,7 @@
 import Student from "../models/Student.js";
 import User from "../models/User.js";
+import Payment from "../models/Payment.js"; // 👈 নতুন
+import Attendance from "../models/Attendance.js"; // 👈 নতুন
 
 // @desc    Add new student
 // @route   POST /api/students
@@ -7,7 +9,6 @@ export const addStudent = async (req, res) => {
   try {
     const { name, email, class: studentClass, subject, guardianName, guardianPhone, monthlyFee, joinDate } = req.body;
 
-    // চেক করা এই ইমেইল দিয়ে আগে কোনো ইউজার (বা স্টুডেন্ট) আছে কিনা
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ success: false, message: "This email is already registered" });
@@ -18,7 +19,6 @@ export const addStudent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Student with this email already exists" });
     }
 
-    // স্টুডেন্ট প্রোফাইল তৈরি করা (joinDate সহ)
     const student = await Student.create({
       teacher: req.user._id,
       name,
@@ -28,7 +28,7 @@ export const addStudent = async (req, res) => {
       guardianName,
       guardianPhone,
       monthlyFee,
-      joinDate: joinDate || Date.now(), // 👈 নতুন: জয়েন ডেট সেভ হবে
+      joinDate: joinDate || Date.now(),
     });
 
     res.status(201).json({ success: true, student });
@@ -98,13 +98,37 @@ export const deleteStudent = async (req, res) => {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
     
-    // স্টুডেন্ট ডিলিট করার সময় তার ইউজার অ্যাকাউন্টও ডিলিট করা
     if (student.user) {
       await User.findByIdAndDelete(student.user);
     }
 
     await student.deleteOne();
     res.json({ success: true, message: "Student removed" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get student full profile (payments, attendance)
+// @route   GET /api/students/:id/profile
+export const getStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student || student.teacher.toString() !== req.user._id.toString()) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    const payments = await Payment.find({ student: student._id }).sort({ year: -1, month: -1 });
+    
+    const totalPresent = await Attendance.countDocuments({ student: student._id, status: "present" });
+    const totalAbsent = await Attendance.countDocuments({ student: student._id, status: "absent" });
+
+    res.json({
+      success: true,
+      student,
+      payments,
+      attendance: { present: totalPresent, absent: totalAbsent }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

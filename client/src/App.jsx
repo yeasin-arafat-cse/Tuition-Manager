@@ -22,6 +22,7 @@ import StudentPayment from './pages/StudentPayment';
 import AdminDashboard from './pages/AdminDashboard';
 import GuardianDashboard from './pages/GuardianDashboard';
 import ProfileSettings from './pages/ProfileSettings';
+import StudentProfile from './pages/StudentProfile';
 import { useAuth } from './context/AuthContext';
 import './pages/Loader.css'; // 👈 নতুন CSS
 
@@ -68,6 +69,7 @@ function App() {
         {/* Teacher Routes */}
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/students" element={<Students />} />
+        <Route path="/teacher/students/:id" element={<StudentProfile />} />
         <Route path="/teacher/schedule" element={<Schedule />} />
         <Route path="/teacher/attendance" element={<Attendance />} />
         <Route path="/teacher/payments" element={<Payment />} />

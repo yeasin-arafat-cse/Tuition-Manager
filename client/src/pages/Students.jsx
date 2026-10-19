@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // 👈 নতুন
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
@@ -9,7 +10,9 @@ const Students = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [classFilter, setClassFilter] = useState(''); // 👈 ক্লাস ফিল্টার
   const { t } = useApp();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -68,41 +71,26 @@ const Students = () => {
     }
   };
 
-  // 👈 নতুন ফাংশন: সিএসভি ডাউনলোড
-  const downloadCSV = () => {
-    if (students.length === 0) return toast.error("No students to export");
-
-    let csvContent = "Name,Class,Subject,Guardian Name,Guardian Phone,Monthly Fee,Join Date\n";
-
-    students.forEach(s => {
-      const joinDate = new Date(s.joinDate).toLocaleDateString();
-      csvContent += `"${s.name}","${s.class}","${s.subject}","${s.guardianName}","${s.guardianPhone}",${s.monthlyFee},"${joinDate}"\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Students_List_${Date.now()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success(t("Exported successfully!", "এক্সপোর্ট সফল হয়েছে!"));
-  };
-
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
+
+  // 👈 ক্লাস ফিল্টার লজিক
+  const filteredStudents = classFilter 
+    ? students.filter(s => s.class.toLowerCase().includes(classFilter.toLowerCase()))
+    : students;
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t("My Students", "আমার স্টুডেন্ট")}</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            className="btn-cancel" 
-            onClick={downloadCSV}
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-main)', display: 'flex', gap: '5px', alignItems: 'center' }}
-          >
-            📥 {t("Export CSV", "এক্সপোর্ট করুন")}
-          </button>
+        
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <input 
+            type="text" 
+            placeholder={t("Filter by Class (e.g. 10)", "ক্লাস দিয়ে খুঁজুন")}
+            value={classFilter}
+            onChange={(e) => setClassFilter(e.target.value)}
+            style={{ padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+          />
           <button className="add-btn" onClick={() => setIsModalOpen(true)}>
             + {t("Add Student", "স্টুডেন্ট যোগ করুন")}
           </button>
@@ -122,25 +110,24 @@ const Students = () => {
             </tr>
           </thead>
           <tbody>
-            {students.length === 0 ? (
-              <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>
-                  {t("No students found", "কোনো স্টুডেন্ট নেই")}
-                </td>
-              </tr>
+            {filteredStudents.length === 0 ? (
+              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>{t("No students found", "কোনো স্টুডেন্ট নেই")}</td></tr>
             ) : (
-              students.map((student) => (
+              filteredStudents.map((student) => (
                 <tr key={student._id}>
-                  <td>{student.name}</td>
+                  {/* 👈 নামে ক্লিক করলে প্রোফাইলে যাবে */}
+                  <td 
+                    onClick={() => navigate(`/teacher/students/${student._id}`)}
+                    style={{ color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    {student.name}
+                  </td>
                   <td>{student.class}</td>
                   <td>{student.subject}</td>
                   <td>{student.guardianName} <br/><small>{student.guardianPhone}</small></td>
                   <td>৳ {student.monthlyFee}</td>
                   <td>
-                    <button 
-                      onClick={() => deleteStudent(student._id)}
-                      style={{ color: 'var(--danger)', background: 'none', fontWeight: 'bold' }}
-                    >
+                    <button onClick={() => deleteStudent(student._id)} style={{ color: 'var(--danger)', background: 'none', fontWeight: 'bold' }}>
                       {t("Delete", "ডিলিট")}
                     </button>
                   </td>
