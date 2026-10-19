@@ -69,7 +69,9 @@ const StudentProfile = () => {
 
         {/* Attendance Summary */}
         <div className="stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
-          <h3 style={{ color: 'var(--text-muted)' }}>{t("Attendance", "হাজিরা")}</h3>
+          <h3 style={{ color: 'var(--text-muted)' }}>
+            {t("Attendance", "হাজিরা")} ({attendance.monthName} {attendance.year})
+          </h3>
           <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
             <div>
               <h2 style={{ color: 'var(--secondary)' }}>{attendance.present}</h2>

@@ -1,7 +1,7 @@
 import Student from "../models/Student.js";
 import User from "../models/User.js";
-import Payment from "../models/Payment.js"; // 👈 নতুন
-import Attendance from "../models/Attendance.js"; // 👈 নতুন
+import Payment from "../models/Payment.js";
+import Attendance from "../models/Attendance.js";
 
 // @desc    Add new student
 // @route   POST /api/students
@@ -120,14 +120,29 @@ export const getStudentProfile = async (req, res) => {
 
     const payments = await Payment.find({ student: student._id }).sort({ year: -1, month: -1 });
     
-    const totalPresent = await Attendance.countDocuments({ student: student._id, status: "present" });
-    const totalAbsent = await Attendance.countDocuments({ student: student._id, status: "absent" });
+    // 👈 নতুন: বর্তমান মাসের হাজিরার হিসাব
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const currentMonthAttendance = await Attendance.find({
+      student: student._id,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+
+    const present = currentMonthAttendance.filter(a => a.status === 'present').length;
+    const absent = currentMonthAttendance.filter(a => a.status === 'absent').length;
 
     res.json({
       success: true,
       student,
       payments,
-      attendance: { present: totalPresent, absent: totalAbsent }
+      attendance: { 
+        present, 
+        absent,
+        monthName: now.toLocaleString('default', { month: 'long' }), // বর্তমান মাসের নাম
+        year: now.getFullYear()
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
