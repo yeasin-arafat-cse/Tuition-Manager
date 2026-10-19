@@ -34,12 +34,11 @@ const TeacherDashboard = () => {
   useEffect(() => {
     fetchDashboard(chartRange);
 
-    // প্রতি ১০ সেকেন্ড পর পর ব্রাউজারের তারিখ চেক করবে
     const interval = setInterval(() => {
       const currentLocalDate = getLocalDateString();
       if (currentLocalDate !== todayDate) {
         setTodayDate(currentLocalDate);
-        fetchDashboard(chartRange); // ডেটা রিফ্রেশ
+        fetchDashboard(chartRange);
       }
     }, 10000); 
 
@@ -56,7 +55,8 @@ const TeacherDashboard = () => {
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const localDayName = daysOfWeek[new Date().getDay()];
   
-  const todayClasses = data?.todaySchedules?.filter(schedule => schedule.day === localDayName) || [];
+  // data.allSchedules থেকে আজকের দিনের ক্লাসগুলো ফিল্টার করা
+  const todayClasses = data?.allSchedules?.filter(schedule => schedule.day === localDayName) || [];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

@@ -17,7 +17,7 @@ export const getTeacherDashboard = async (req, res) => {
     const students = await Student.find({ teacher: teacherId, active: true });
     const paidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
 
-    // 👈 নতুন Due লজিক (৩০ দিনের সাইকেল)
+    // Due হিসাব (৩০ দিনের সাইকেল)
     let totalDue = 0;
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
@@ -53,11 +53,9 @@ export const getTeacherDashboard = async (req, res) => {
         }
       }
     });
-    // 👈 Due লজিক শেষ
 
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const today = days[new Date().getDay()];
-    const todaySchedules = await Schedule.find({ teacher: teacherId, day: today })
+    // 👈 সব রুটিন আনা হচ্ছে, যাতে ফ্রন্টএন্ড নিজে ফিল্টার করতে পারে
+    const allSchedules = await Schedule.find({ teacher: teacherId })
       .populate("student", "name class")
       .sort({ time: 1 });
 
@@ -102,7 +100,7 @@ export const getTeacherDashboard = async (req, res) => {
       data: {
         totalStudents,
         totalDue,
-        todaySchedules,
+        allSchedules, // 👈 allSchedules পাঠানো হলো
         totalExams,
         incomeChartData
       }
@@ -133,7 +131,6 @@ export const getStudentDashboard = async (req, res) => {
     const pendingExams = await Exam.countDocuments({ student: studentProfile._id, status: "pending" });
     const completedExams = await Exam.countDocuments({ student: studentProfile._id, status: "submitted" });
 
-    // 👈 নতুন Due লজিক (স্টুডেন্টের জন্য)
     let totalDue = 0;
     const paidPayments = await Payment.find({ student: studentProfile._id, status: "paid" });
     
@@ -165,7 +162,6 @@ export const getStudentDashboard = async (req, res) => {
         totalDue += studentProfile.monthlyFee;
       }
     }
-    // 👈 Due লজিক শেষ
 
     const notices = await Notice.find({ teacher: studentProfile.teacher })
       .sort({ createdAt: -1 })
