@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import api from './services/api'; // 👈 সার্ভার পিং করার জন্য
+import api from './services/api';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Layout from './components/Layout';
@@ -25,20 +25,18 @@ import ProfileSettings from './pages/ProfileSettings';
 import StudentProfile from './pages/StudentProfile';
 import NoticeBoard from './pages/NoticeBoard';
 import { useAuth } from './context/AuthContext';
-import './pages/Loader.css'; // 👈 নতুন CSS
+import './pages/Loader.css';
 
 function App() {
   const { user, loading } = useAuth();
   const [serverReady, setServerReady] = useState(false);
 
-  // 👈 সার্ভার ওয়েক-আপ লজিক
+  // সার্ভার ওয়েক-আপ লজিক
   useEffect(() => {
     const wakeUpServer = async () => {
       try {
-        // সার্ভার ঘুমিয়ে থাকলে এটি তাকে জাগিয়ে দিবে
         await api.get('/health'); 
       } catch (error) {
-        // এরর হলেও সমস্যা নেই, সার্ভার জেগে উঠবে
       } finally {
         setServerReady(true);
       }
@@ -46,7 +44,19 @@ function App() {
     wakeUpServer();
   }, []);
 
-  // 👈 সার্ভার জাগা পর্যন্ত বা ইউজার লোড হওয়া পর্যন্ত অ্যানিমেশন দেখাবে
+  // 👈 নতুন: গ্লোবাল অটো-রিফ্রেশ (রাত ১২টায়)
+  useEffect(() => {
+    const now = new Date();
+    const night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const msToMidnight = night.getTime() - now.getTime();
+
+    const timer = setTimeout(() => {
+      window.location.reload(); // রাত ১২টায় পুরো পেজ রিফ্রেশ হবে
+    }, msToMidnight);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!serverReady || loading) {
     return (
       <div className="loader-container">

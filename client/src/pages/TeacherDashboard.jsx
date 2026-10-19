@@ -6,10 +6,17 @@ import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
+const getLocalDateString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const TeacherDashboard = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [chartRange, setChartRange] = useState('6months'); // 👈 চার্ট ফিল্টার স্টেট
+  const [chartRange, setChartRange] = useState('6months');
+  const [todayDate, setTodayDate] = useState(getLocalDateString()); // 👈 তারিখ স্টেট
+  
   const { t } = useApp();
   const { user } = useAuth(); 
 
@@ -27,7 +34,7 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboard(chartRange);
-  }, [chartRange]); // চার্ট ফিল্টার চেঞ্জ হলে আবার ডেটা আনবে
+  }, [chartRange]);
 
   if (isLoading && !data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
   if (!data) return <div>Error loading data</div>;
@@ -40,7 +47,7 @@ const TeacherDashboard = () => {
       return (
         <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px', border: '1px solid var(--border)', borderRadius: '8px' }}>
           <p style={{ fontWeight: 'bold' }}>{label}</p>
-          <p style={{ color: 'var(--primary)' }}>৳ {payload[0].value}</p>
+          <p style={{ color: 'var(--primary)' }}>Tk {payload[0].value}</p>
         </div>
       );
     }
@@ -57,6 +64,10 @@ const TeacherDashboard = () => {
           <h1 className="page-title" style={{ fontSize: '2rem', marginTop: '0.2rem' }}>
             {t("Dashboard Overview", "ড্যাশবোর্ড ওভারভিউ")}
           </h1>
+          {/* 👈 নতুন: আজকের তারিখ */}
+          <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
+            {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
+          </p>
         </div>
       </div>
 
@@ -74,7 +85,7 @@ const TeacherDashboard = () => {
           <div className="stat-icon danger">💰</div>
           <div className="stat-info">
             <h3>{t("Total Due", "মোট বাকি টাকা")}</h3>
-            <h2>৳ {data.totalDue}</h2>
+            <h2>Tk {data.totalDue}</h2>
           </div>
         </div>
 
@@ -87,12 +98,11 @@ const TeacherDashboard = () => {
         </div>
       </div>
 
-      {/* 👈 চার্ট সেকশন (ড্রপডাউন সহ) */}
+      {/* চার্ট সেকশন */}
       <div className="dashboard-section" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 className="section-title" style={{ margin: 0 }}>📈 {t("Income Overview", "আয়ের হিসাব")}</h2>
           
-          {/* ড্রপডাউন ফিল্টার */}
           <select 
             value={chartRange} 
             onChange={(e) => setChartRange(e.target.value)}
