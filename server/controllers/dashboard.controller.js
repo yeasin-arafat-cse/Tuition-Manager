@@ -17,7 +17,6 @@ export const getTeacherDashboard = async (req, res) => {
     const students = await Student.find({ teacher: teacherId, active: true });
     const paidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
 
-    // Due হিসাব (৩০ দিনের সাইকেল)
     let totalDue = 0;
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
@@ -54,7 +53,6 @@ export const getTeacherDashboard = async (req, res) => {
       }
     });
 
-    // 👈 সব রুটিন আনা হচ্ছে, যাতে ফ্রন্টএন্ড নিজে ফিল্টার করতে পারে
     const allSchedules = await Schedule.find({ teacher: teacherId })
       .populate("student", "name class")
       .sort({ time: 1 });
@@ -100,7 +98,7 @@ export const getTeacherDashboard = async (req, res) => {
       data: {
         totalStudents,
         totalDue,
-        allSchedules, // 👈 allSchedules পাঠানো হলো
+        allSchedules,
         totalExams,
         incomeChartData
       }
@@ -163,6 +161,9 @@ export const getStudentDashboard = async (req, res) => {
       }
     }
 
+    // 👈 নতুন: স্টুডেন্টের সব রুটিন আনা
+    const studentSchedules = await Schedule.find({ student: studentProfile._id });
+
     const notices = await Notice.find({ teacher: studentProfile.teacher })
       .sort({ createdAt: -1 })
       .limit(3);
@@ -187,7 +188,8 @@ export const getStudentDashboard = async (req, res) => {
           pending: pendingExams,
           completed: completedExams
         },
-        notices
+        notices,
+        studentSchedules // 👈 রুটিন পাঠানো হলো
       }
     });
   } catch (error) {

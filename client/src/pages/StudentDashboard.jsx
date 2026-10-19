@@ -6,32 +6,56 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import './Dashboard.css';
 
+const getLocalDateString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const StudentDashboard = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [todayDate, setTodayDate] = useState(getLocalDateString());
+  
   const { t } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await api.get('/dashboard/student');
-        setData(res.data.data);
-      } catch (error) {
-        toast.error('Failed to load dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+  const fetchDashboard = async () => {
+    try {
+      const res = await api.get('/dashboard/student');
+      setData(res.data.data);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
+  useEffect(() => {
+    fetchDashboard();
+
+    // প্রতি ১০ সেকেন্ড পর পর তারিখ আপডেট চেক করবে
+    const interval = setInterval(() => {
+      const currentDate = getLocalDateString();
+      if (currentDate !== todayDate) {
+        setTodayDate(currentDate);
+        fetchDashboard();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [todayDate]);
+
+  if (isLoading && !data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
   if (!data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>No data found</div>;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+
+  // 👈 আজকের দিন এবং ক্লাস ফিল্টার
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const localDayName = daysOfWeek[new Date().getDay()];
+  const todayClasses = data.studentSchedules?.filter(s => s.day === localDayName) || [];
 
   return (
     <div className="animate-fade-in">
@@ -43,12 +67,15 @@ const StudentDashboard = () => {
           <h1 className="page-title" style={{ fontSize: '2rem', marginTop: '0.2rem' }}>
             {t("Student Dashboard", "স্টুডেন্ট ড্যাশবোর্ড")}
           </h1>
+          {/* 👈 আজকের তারিখ */}
+          <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
+            {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
+          </p>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="dashboard-grid">
-        {/* 👈 হাজিরার কার্ডে মাসের নাম যুক্ত করা হলো */}
         <div className="stat-card" onClick={() => navigate('/student/attendance')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon success">✅</div>
           <div className="stat-info">
@@ -62,7 +89,7 @@ const StudentDashboard = () => {
           <div className="stat-info">
             <h3>{t("Total Due", "মোট বাকি")}</h3>
             <h2 style={{ color: data.totalDue > 0 ? 'var(--danger)' : 'var(--secondary)' }}>
-              ৳ {data.totalDue}
+              Tk {data.totalDue}
             </h2>
           </div>
         </div>
@@ -84,7 +111,36 @@ const StudentDashboard = () => {
         </div>
       </div>
 
+      {/* 👈 নতুন: Today's Classes সেকশন */}
+      <div className="dashboard-section" style={{ marginBottom: '2rem' }}>
+        <h2 className="section-title">
+          <span style={{ fontSize: '1.4rem' }}>📅</span> {t("Today's Classes", "আজকের ক্লাস")} ({localDayName})
+        </h2>
+        
+        {todayClasses.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
+            <p style={{ color: 'var(--text-muted)' }}>{t("No classes today!", "আজ কোনো ক্লাস নেই!")}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '1rem' }}>
+            {todayClasses.map((cls) => (
+              <div key={cls._id} style={{ background: 'var(--bg-main)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid var(--secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ fontWeight: '700', fontSize: '1.05rem' }}>{cls.subject}</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t("Duration:", "সময়কাল:")} {cls.duration} mins</p>
+                </div>
+                <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--secondary)', padding: '0.4rem 0.8rem', borderRadius: '20px', fontWeight: '700', fontSize: '0.9rem' }}>
+                  {cls.time}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        {/* Recent Payments List */}
         <div className="dashboard-section">
           <h2 className="section-title">📅 {t("Recent Payments", "সাম্প্রতিক পেমেন্ট")}</h2>
           {data.recentPayments.length === 0 ? (
@@ -105,6 +161,7 @@ const StudentDashboard = () => {
           )}
         </div>
 
+        {/* Profile Info */}
         <div className="dashboard-section">
           <h2 className="section-title">👤 {t("My Profile", "আমার প্রোফাইল")}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
