@@ -21,9 +21,16 @@ const Attendance = () => {
   });
   const [todayDate, setTodayDate] = useState(getLocalDateString()); 
   
+  // মডাল স্টেট
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentDetails, setStudentDetails] = useState([]); 
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  
   const { t } = useApp();
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       const res = await api.get(`/attendance?month=${selectedMonth}`);
       setStudentCards(res.data.studentCards);
@@ -37,22 +44,20 @@ const Attendance = () => {
   useEffect(() => {
     fetchData();
 
-    // 👈 প্রতি ১০ সেকেন্ড পর পর ডেটা অটো রিফ্রেশ হবে
     const interval = setInterval(() => {
       const newDate = getLocalDateString();
       if (newDate !== todayDate) {
         setTodayDate(newDate);
         setSelectedMonth(newDate.substring(0, 7));
+        fetchData(); 
       }
-      fetchData();
-    }, 10000); 
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [selectedMonth, todayDate]);
 
   const handleAttendance = async (studentId, status) => {
     const today = todayDate; 
-
     setStudentCards(prev => prev.map(card => {
       if (card._id === studentId) {
         let newPresent = card.present;
@@ -81,14 +86,33 @@ const Attendance = () => {
     }
   };
 
-  const handleDelete = async (studentId) => {
-    if (!window.confirm(t("Delete this month's attendance for this student?", "এই স্টুডেন্টের এই মাসের হাজিরা ডিলিট করবেন?"))) return;
+  // নির্দিষ্ট দিনের হাজিরা ডিলিট
+  const handleDeleteSpecificDay = async (dateStr) => {
+    if (!window.confirm(t("Delete attendance for this specific date?", "এই নির্দিষ্ট দিনের হাজিরা ডিলিট করবেন?"))) return;
     try {
-      await api.delete(`/attendance/student/${studentId}/month/${selectedMonth}`);
+      await api.delete(`/attendance/student/${selectedStudent._id}/date/${dateStr}`);
       toast.success(t("Deleted!", "ডিলিট হয়েছে!"));
-      fetchData();
+      
+      const updatedDetails = studentDetails.filter(d => new Date(d.date).toISOString().split('T')[0] !== dateStr);
+      setStudentDetails(updatedDetails);
+      fetchData(); 
     } catch (error) {
-      toast.error('Failed to delete');
+      toast.error(error.response?.data?.message || 'Failed to delete');
+    }
+  };
+
+  // মডাল ওপেন করে ডিটেইলস আনা
+  const openDetails = async (student) => {
+    setSelectedStudent(student);
+    setIsModalOpen(true);
+    setIsDetailsLoading(true);
+    try {
+      const res = await api.get(`/attendance/student/${student._id}/details?month=${selectedMonth}`);
+      setStudentDetails(res.data.attendances);
+    } catch (error) {
+      toast.error("Failed to load details");
+    } finally {
+      setIsDetailsLoading(false);
     }
   };
 
@@ -129,11 +153,10 @@ const Attendance = () => {
                   <p>{card.class}</p>
                 </div>
                 <button 
-                  onClick={() => handleDelete(card._id)}
-                  style={{ background: 'none', color: 'var(--danger)', fontSize: '1.2rem', cursor: 'pointer' }}
-                  title="Delete Month Data"
+                  onClick={() => openDetails(card)}
+                  style={{ background: 'none', color: 'var(--primary)', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '600' }}
                 >
-                  🗑️
+                  Details
                 </button>
               </div>
 
@@ -179,6 +202,53 @@ const Attendance = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ডিটেইলস মডাল */}
+      {isModalOpen && selectedStudent && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>{selectedStudent.name} - {t("Attendance", "হাজিরা")}</h2>
+              <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
+            </div>
+            
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
+              {isDetailsLoading ? (
+                <p style={{ textAlign: 'center', padding: '1rem' }}>Loading...</p>
+              ) : studentDetails.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)' }}>No attendance records this month.</p>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0 }}>
+                  {studentDetails.map((att) => {
+                    const dateStr = new Date(att.date).toISOString().split('T')[0];
+                    return (
+                      <li key={att._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', borderBottom: '1px solid var(--border)' }}>
+                        <div>
+                          <strong>{new Date(att.date).toLocaleDateString()}</strong>
+                          <p style={{ fontSize: '0.85rem', color: att.status === 'present' ? 'var(--secondary)' : att.status === 'absent' ? 'var(--danger)' : 'var(--warning)', textTransform: 'capitalize' }}>
+                            {att.status}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteSpecificDay(dateStr)}
+                          style={{ background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1.2rem' }}
+                          title="Delete this day"
+                        >
+                          🗑️
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            
+            <button className="btn-submit" style={{ width: '100%', marginTop: '1rem' }} onClick={() => setIsModalOpen(false)}>
+              {t("Close", "বন্ধ করুন")}
+            </button>
+          </div>
         </div>
       )}
     </div>
