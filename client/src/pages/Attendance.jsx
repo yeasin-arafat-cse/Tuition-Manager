@@ -20,6 +20,8 @@ const Attendance = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; 
   });
+  const [todayDate, setTodayDate] = useState(getLocalDateString()); // 👈 আজকের তারিখ স্টেটে রাখলাম
+  
   const { t } = useApp();
 
   const fetchData = async () => {
@@ -38,27 +40,26 @@ const Attendance = () => {
     fetchData();
   }, [selectedMonth]);
 
-  // 👈 নতুন: রাত ১২টায় অটোমেটিকALLY ডেটা রিফ্রেশ হবে
+  // 👈 নতুন: প্রতি ১০ সেকেন্ড পর পর তারিখ চেক করবে। রাত ১২টা পার হলে ডেটা রিফ্রেশ হবে।
   useEffect(() => {
-    const now = new Date();
-    const night = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1, // আগামীকাল
-      0, 0, 0 // রাত ১২টা
-    );
-    const msToMidnight = night.getTime() - now.getTime();
+    const interval = setInterval(() => {
+      const currentDate = getLocalDateString();
+      
+      // যদি আজকের তারিখ পরিবর্তন হয়ে যায় (অর্থাৎ রাত ১২টা পার হয়েছে)
+      if (currentDate !== todayDate) {
+        setTodayDate(currentDate); // নতুন তারিখ সেট করা
+        setSelectedMonth(currentDate.substring(0, 7)); // মাস পিকার আপডেট করা
+        fetchData(); // ডেটা রিফ্রেশ করা
+        toast.success(t("New day started! Attendance refreshed.", "নতুন দিন শুরু হয়েছে! হাজিরা আপডেট হয়েছে।"));
+      }
+    }, 10000); // ১০ সেকেন্ড পর পর চেক করবে
 
-    const timer = setTimeout(() => {
-      fetchData(); // রাত ১২টায় ডেটা আবার লোড হবে
-      // চাইলে এখানে window.location.reload() ও দিতে পারেন
-    }, msToMidnight);
-
-    return () => clearTimeout(timer);
-  }, [studentCards]);
+    return () => clearInterval(interval);
+  }, [todayDate]);
 
   const handleAttendance = async (studentId, status) => {
-    const today = getLocalDateString(); // 👈 লোকাল টাইম ব্যবহার করা হলো
+    // 👈 এখানেও লোকাল টাইম ব্যবহার করা হলো
+    const today = todayDate; 
 
     setStudentCards(prev => prev.map(card => {
       if (card._id === studentId) {
