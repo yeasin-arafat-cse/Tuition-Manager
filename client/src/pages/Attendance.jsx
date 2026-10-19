@@ -4,7 +4,6 @@ import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import './Attendance.css';
 
-// লোকাল টাইম বের করার ফাংশন
 const getLocalDateString = () => {
   const d = new Date();
   const year = d.getFullYear();
@@ -38,23 +37,20 @@ const Attendance = () => {
 
   useEffect(() => {
     fetchData();
+
+    // 👈 নতুন: রাত ১২টার ইভেন্ট লিসেনার
+    const handleNewDay = () => {
+      const newDate = getLocalDateString();
+      setTodayDate(newDate);
+      setSelectedMonth(newDate.substring(0, 7));
+      fetchData();
+    };
+    window.addEventListener('newDayStarted', handleNewDay);
+
+    return () => {
+      window.removeEventListener('newDayStarted', handleNewDay);
+    };
   }, [selectedMonth]);
-
-  // প্রতি ১০ সেকেন্ড পর পর তারিখ চেক করবে
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentDate = getLocalDateString();
-      
-      if (currentDate !== todayDate) {
-        setTodayDate(currentDate); 
-        setSelectedMonth(currentDate.substring(0, 7)); 
-        fetchData(); 
-        toast.success(t("New day started! Attendance refreshed.", "নতুন দিন শুরু হয়েছে! হাজিরা আপডেট হয়েছে।"));
-      }
-    }, 10000); 
-
-    return () => clearInterval(interval);
-  }, [todayDate]);
 
   const handleAttendance = async (studentId, status) => {
     const today = todayDate; 
@@ -103,7 +99,6 @@ const Attendance = () => {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="page-title">{t("Attendance", "হাজিরা")}</h1>
-          {/* 👈 নতুন: স্ক্রিনে আজকের তারিখ দেখাবে */}
           <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
             {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
           </p>

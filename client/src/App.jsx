@@ -44,17 +44,20 @@ function App() {
     wakeUpServer();
   }, []);
 
-  // 👈 নতুন: গ্লোবাল অটো-রিফ্রেশ (রাত ১২টায়)
+  // 👈 নতুন: রাত ১২টায় ডেটা আপডেট করার লজিক
   useEffect(() => {
-    const now = new Date();
-    const night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-    const msToMidnight = night.getTime() - now.getTime();
+    const checkMidnight = () => {
+      const now = new Date();
+      // যদি ঘণ্টা ০ (রাত ১২টা), মিনিট ০, সেকেন্ড ০ হয়
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        // পেজ রিফ্রেশ না করে শুধু একটি ইভেন্ট পাঠাবে
+        window.dispatchEvent(new Event('newDayStarted'));
+      }
+    };
 
-    const timer = setTimeout(() => {
-      window.location.reload(); // রাত ১২টায় পুরো পেজ রিফ্রেশ হবে
-    }, msToMidnight);
+    const interval = setInterval(checkMidnight, 10000); // প্রতি ১০ সেকেন্ড পর পর চেক করবে
 
-    return () => clearTimeout(timer);
+    return () => clearInterval(interval);
   }, []);
 
   if (!serverReady || loading) {

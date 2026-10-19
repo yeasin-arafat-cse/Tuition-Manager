@@ -15,7 +15,7 @@ const TeacherDashboard = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [chartRange, setChartRange] = useState('6months');
-  const [todayDate, setTodayDate] = useState(getLocalDateString()); // 👈 তারিখ স্টেট
+  const [todayDate, setTodayDate] = useState(getLocalDateString());
   
   const { t } = useApp();
   const { user } = useAuth(); 
@@ -34,6 +34,17 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboard(chartRange);
+
+    // 👈 নতুন: রাত ১২টার ইভেন্ট লিসেনার
+    const handleNewDay = () => {
+      setTodayDate(getLocalDateString());
+      fetchDashboard(chartRange);
+    };
+    window.addEventListener('newDayStarted', handleNewDay);
+
+    return () => {
+      window.removeEventListener('newDayStarted', handleNewDay);
+    };
   }, [chartRange]);
 
   if (isLoading && !data) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
@@ -64,7 +75,6 @@ const TeacherDashboard = () => {
           <h1 className="page-title" style={{ fontSize: '2rem', marginTop: '0.2rem' }}>
             {t("Dashboard Overview", "ড্যাশবোর্ড ওভারভিউ")}
           </h1>
-          {/* 👈 নতুন: আজকের তারিখ */}
           <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
             {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
           </p>
