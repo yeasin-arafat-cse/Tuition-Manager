@@ -4,6 +4,15 @@ import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import './Attendance.css';
 
+// 👈 লোকাল টাইম বের করার ফাংশন (বাংলাদেশের সময়)
+const getLocalDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Attendance = () => {
   const [studentCards, setStudentCards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +38,27 @@ const Attendance = () => {
     fetchData();
   }, [selectedMonth]);
 
+  // 👈 নতুন: রাত ১২টায় অটোমেটিকALLY ডেটা রিফ্রেশ হবে
+  useEffect(() => {
+    const now = new Date();
+    const night = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1, // আগামীকাল
+      0, 0, 0 // রাত ১২টা
+    );
+    const msToMidnight = night.getTime() - now.getTime();
+
+    const timer = setTimeout(() => {
+      fetchData(); // রাত ১২টায় ডেটা আবার লোড হবে
+      // চাইলে এখানে window.location.reload() ও দিতে পারেন
+    }, msToMidnight);
+
+    return () => clearTimeout(timer);
+  }, [studentCards]);
+
   const handleAttendance = async (studentId, status) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString(); // 👈 লোকাল টাইম ব্যবহার করা হলো
 
     setStudentCards(prev => prev.map(card => {
       if (card._id === studentId) {
@@ -38,12 +66,10 @@ const Attendance = () => {
         let newAbsent = card.absent;
         let newOffDay = card.offDay || 0;
 
-        // আগের স্ট্যাটাস বাদ দেওয়া
         if (card.todayStatus === 'present') newPresent--;
         if (card.todayStatus === 'absent') newAbsent--;
         if (card.todayStatus === 'off_day') newOffDay--;
 
-        // নতুন স্ট্যাটাস যোগ করা
         if (status === 'present') newPresent++;
         else if (status === 'absent') newAbsent++;
         else if (status === 'off_day') newOffDay++;
@@ -54,11 +80,7 @@ const Attendance = () => {
     }));
 
     try {
-      await api.post('/attendance', {
-        studentId,
-        date: today,
-        status
-      });
+      await api.post('/attendance', { studentId, date: today, status });
       toast.success(t("Attendance marked", "হাজিরা সেভ হয়েছে"));
     } catch (error) {
       toast.error('Failed to save attendance');
