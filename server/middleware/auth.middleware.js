@@ -10,23 +10,30 @@ export const protect = async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     try {
-      // "Bearer <token>" থেকে শুধু টোকেনটা নেওয়া
       token = req.headers.authorization.split(" ")[1];
-
-      // টোকেন ভেরিফাই করা
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      const user = await User.findById(decoded.id).select("-password");
 
-      // ইউজারকে খুঁজে বের করা (পাসওয়ার্ড ছাড়া)
-      req.user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        return res.status(401).json({ success: false, message: "User not found" });
+      }
 
+      // 👈 নতুন: ইউজার ব্লকড কিনা চেক করা
+      if (user.status === "blocked") {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Your account has been blocked by the Admin." 
+        });
+      }
+
+      req.user = user;
       next();
     } catch (error) {
       console.error(error);
       res.status(401).json({ success: false, message: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ success: false, message: "Not authorized, no token" });
   }
 };
