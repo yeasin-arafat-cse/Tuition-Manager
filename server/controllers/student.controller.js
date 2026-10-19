@@ -120,7 +120,7 @@ export const getStudentProfile = async (req, res) => {
 
     const payments = await Payment.find({ student: student._id }).sort({ year: -1, month: -1 });
     
-    // 👈 নতুন: বর্তমান মাসের হাজিরার হিসাব
+    // বর্তমান মাসের হাজিরার হিসাব
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -132,6 +132,7 @@ export const getStudentProfile = async (req, res) => {
 
     const present = currentMonthAttendance.filter(a => a.status === 'present').length;
     const absent = currentMonthAttendance.filter(a => a.status === 'absent').length;
+    const offDay = currentMonthAttendance.filter(a => a.status === 'off_day').length; // 👈 Off Day
 
     res.json({
       success: true,
@@ -140,7 +141,8 @@ export const getStudentProfile = async (req, res) => {
       attendance: { 
         present, 
         absent,
-        monthName: now.toLocaleString('default', { month: 'long' }), // বর্তমান মাসের নাম
+        offDay, // 👈 Off Day পাঠানো হলো
+        monthName: now.toLocaleString('default', { month: 'long' }), 
         year: now.getFullYear()
       }
     });

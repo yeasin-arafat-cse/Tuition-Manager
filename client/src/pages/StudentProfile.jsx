@@ -67,19 +67,25 @@ const StudentProfile = () => {
           </div>
         </div>
 
-        {/* Attendance Summary */}
-        <div className="stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
-          <h3 style={{ color: 'var(--text-muted)' }}>
+        {/* Attendance Summary (আপডেট করা) */}
+        <div className="stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem' }}>
+          <h3 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
             {t("Attendance", "হাজিরা")} ({attendance.monthName} {attendance.year})
           </h3>
-          <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
-            <div>
-              <h2 style={{ color: 'var(--secondary)' }}>{attendance.present}</h2>
-              <p style={{ fontSize: '0.9rem' }}>{t("Present", "উপস্থিত")}</p>
+          
+          <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ color: 'var(--secondary)', margin: 0 }}>{attendance.present}</h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t("Present", "উপস্থিত")}</p>
             </div>
-            <div>
-              <h2 style={{ color: 'var(--danger)' }}>{attendance.absent}</h2>
-              <p style={{ fontSize: '0.9rem' }}>{t("Absent", "অনুপস্থিত")}</p>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ color: 'var(--danger)', margin: 0 }}>{attendance.absent}</h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t("Absent", "অনুপস্থিত")}</p>
+            </div>
+            {/* 👈 নতুন Off Day সেকশন */}
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ color: 'var(--warning)', margin: 0 }}>{attendance.offDay}</h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t("Off Day", "ছুটি")}</p>
             </div>
           </div>
         </div>
