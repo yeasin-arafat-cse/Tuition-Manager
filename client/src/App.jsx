@@ -45,7 +45,7 @@ function App() {
     wakeUpServer();
   }, []);
 
-  // 👈 নতুন: দিন পরিবর্তন (Date Change) ডিটেক্ট করার লজিক
+  // 👈 নতুন: দিন পরিবর্তন (Date Change) ডিটেক্ট করে পেজ রিফ্রেশ
   useEffect(() => {
     // শুরুতে বর্তমান তারিখ সেভ করে রাখি
     let lastKnownDate = new Date().toDateString();
@@ -55,9 +55,9 @@ function App() {
       
       // যদি আজকের তারিখ আগের তারিখের সাথে না মেলে (অর্থাৎ দিন পরিবর্তন হয়েছে)
       if (currentDate !== lastKnownDate) {
-        lastKnownDate = currentDate; // নতুন তারিখ সেট করা
-        window.dispatchEvent(new Event('newDayStarted')); // ইভেন্ট পাঠানো
-        console.log("New day detected! Dispatching event..."); 
+        lastKnownDate = currentDate; 
+        // পেজটি রিফ্রেশ করে দিবে, যাতে সব ডেটা নতুন করে লোড হয়
+        window.location.reload(); 
       }
     }, 5000); // প্রতি ৫ সেকেন্ড পর পর চেক করবে
 
