@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
-import './Students.css'; // বেসিক স্টাইলের জন্য
+import './Students.css'; 
 
 const StudyMaterial = () => {
   const [materials, setMaterials] = useState([]);
@@ -11,13 +11,18 @@ const StudyMaterial = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
+  
+  // ইমেজ ফাইল ও প্রিভিউ
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  
   const { t } = useApp();
 
   const [formData, setFormData] = useState({
     studentId: '',
     title: '',
     description: '',
-    imageUrl: '' // Base64 ইমেজ
+    imageUrl: '' 
   });
 
   const fetchData = async () => {
@@ -46,35 +51,48 @@ const StudyMaterial = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ইমেজ আপলোড করে Base64 এ কনভার্ট করা (ছোট সাইজের হলে)
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 1024 * 1024) { // ১ মেগাবাইটের বেশি হলে এরর
-        return toast.error("Image must be less than 1MB");
+      if (file.size > 5 * 1024 * 1024) { 
+        return toast.error("Image must be less than 5MB");
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, imageUrl: reader.result });
-      };
-      reader.readAsDataURL(file);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file)); 
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
     try {
+      const data = new FormData();
+      data.append('studentId', formData.studentId);
+      data.append('title', formData.title);
+      data.append('description', formData.description);
+      
+      if (imageFile) {
+        data.append('imageFile', imageFile);
+      }
+
       if (editingMaterial) {
-        await api.put(`/materials/${editingMaterial._id}`, formData);
+        await api.put(`/materials/${editingMaterial._id}`, data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success(t("Material Updated!", "মেটেরিয়াল আপডেট হয়েছে!"));
       } else {
-        await api.post('/materials', formData);
+        await api.post('/materials', data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success(t("Material Sent!", "মেটেরিয়াল পাঠানো হয়েছে!"));
       }
+      
       setIsModalOpen(false);
       setEditingMaterial(null);
       setFormData({ studentId: students[0]?._id || '', title: '', description: '', imageUrl: '' });
+      setImageFile(null);
+      setImagePreview('');
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save');
@@ -102,6 +120,8 @@ const StudyMaterial = () => {
       description: material.description || '',
       imageUrl: material.imageUrl || ''
     });
+    setImagePreview(material.imageUrl || '');
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -111,7 +131,7 @@ const StudyMaterial = () => {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t("Study Materials", "স্টাডি মেটেরিয়াল")}</h1>
-        <button className="add-btn" onClick={() => { setEditingMaterial(null); setIsModalOpen(true); }}>
+        <button className="add-btn" onClick={() => { setEditingMaterial(null); setImagePreview(''); setImageFile(null); setIsModalOpen(true); }}>
           + {t("Add Material", "মেটেরিয়াল যোগ করুন")}
         </button>
       </div>
@@ -174,10 +194,14 @@ const StudyMaterial = () => {
               </div>
 
               <div className="form-group">
-                <label>{t("Upload Image (Max 1MB)", "ছবি আপলোড (সর্বোচ্চ ১MB)")}</label>
+                <label>{t("Upload Image (Max 5MB)", "ছবি আপলোড (সর্বোচ্চ ৫MB)")}</label>
                 <input type="file" accept="image/*" onChange={handleImageUpload} />
-                {formData.imageUrl && (
-                  <img src={formData.imageUrl} alt="Preview" style={{ width: '100px', marginTop: '10px', borderRadius: '8px' }} />
+                {(imagePreview || formData.imageUrl) && (
+                  <img 
+                    src={imagePreview || formData.imageUrl} 
+                    alt="Preview" 
+                    style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', marginTop: '10px', borderRadius: '8px' }} 
+                  />
                 )}
               </div>
 

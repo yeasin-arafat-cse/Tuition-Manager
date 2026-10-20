@@ -5,23 +5,29 @@ import { useApp } from '../context/AppContext';
 import './Layout.css';
 
 const Layout = () => {
-  const { user } = useAuth(); // 👈 logout এখান থেকে সরিয়ে নেওয়া হয়েছে
+  const { user, logout } = useAuth();
   const { theme, toggleTheme, toggleLanguage, t } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const getMenuItems = () => {
     if (user?.role === 'teacher') {
       return [
         { name: t("Dashboard", "ড্যাশবোর্ড"), path: '/teacher/dashboard', icon: '📊' },
         { name: t("Students", "স্টুডেন্ট"), path: '/teacher/students', icon: '👨‍🎓' },
+        { name: t("Study Materials", "স্টাডি মেটেরিয়াল"), path: '/teacher/materials', icon: '📚' }, // 👈 নতুন মেনু
         { name: t("Schedule", "রুটিন"), path: '/teacher/schedule', icon: '📅' },
         { name: t("Attendance", "হাজিরা"), path: '/teacher/attendance', icon: '✅' },
         { name: t("Payments", "পেমেন্ট"), path: '/teacher/payments', icon: '💰' },
         { name: t("AI MCQ", "এআই প্রশ্ন"), path: '/teacher/ai-mcq', icon: '🤖' },
-        { name: t("Question Bank", "প্রশ্ন ব্যাংক"), path: '/teacher/question-bank', icon: '📚' },
-        { name: t("Exams", "এক্সাম"), path: '/teacher/exams', icon: '📝' },
+        { name: t("Question Bank", "প্রশ্ন ব্যাংক"), path: '/teacher/question-bank', icon: '📝' },
+        { name: t("Exams", "এক্সাম"), path: '/teacher/exams', icon: '📋' },
         { name: t("Notice Board", "নোটিশ বোর্ড"), path: '/teacher/notices', icon: '📢' },
         { name: t("Settings", "সেটিংস"), path: '/settings', icon: '⚙️' },
       ];
@@ -29,6 +35,7 @@ const Layout = () => {
     if (user?.role === 'student') {
       return [
         { name: t("Dashboard", "ড্যাশবোর্ড"), path: '/student/dashboard', icon: '📊' },
+        { name: t("Study Materials", "স্টাডি মেটেরিয়াল"), path: '/student/materials', icon: '📚' }, // 👈 নতুন মেনু
         { name: t("My Routine", "আমার রুটিন"), path: '/student/schedule', icon: '📅' },
         { name: t("My Exams", "আমার এক্সাম"), path: '/student/exams', icon: '📝' },
         { name: t("Attendance", "উপস্থিতি"), path: '/student/attendance', icon: '✅' },
@@ -57,12 +64,7 @@ const Layout = () => {
     <div className="layout-container">
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <img 
-            src="/favicon.ico.png" 
-            alt="Logo" 
-            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} 
-          /> 
-          Tuition Manager
+          <span>🎓</span> Tuition Manager
         </div>
         <div className="sidebar-menu">
           {menuItems.map((item) => (
@@ -100,7 +102,6 @@ const Layout = () => {
             <button className="icon-btn ripple-btn" onClick={toggleLanguage} title="Change Language">
               {t("BN", "EN")}
             </button>
-            {/* 👈 Logout বাটনটি এখান থেকে মুছে ফেলা হয়েছে */}
           </div>
         </div>
 
