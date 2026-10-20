@@ -1,5 +1,6 @@
 import Material from "../models/Material.js";
 import Student from "../models/Student.js";
+import cloudinary from "../config/cloudinary.js"; // 👈 Cloudinary ইমপোর্ট
 
 // @desc    Create a new material
 // @route   POST /api/materials
@@ -70,6 +71,20 @@ export const updateMaterial = async (req, res) => {
       return res.status(404).json({ success: false, message: "Material not found" });
     }
 
+    // 👈 নতুন ছবি আপলোড হলে আগের ছবিটা Cloudinary থেকে ডিলিট করা
+    if (req.file && material.imageUrl) {
+      try {
+        const urlParts = material.imageUrl.split('/');
+        const fileNameWithExtension = urlParts[urlParts.length - 1];
+        const folderName = urlParts[urlParts.length - 2];
+        const publicId = `${folderName}/${fileNameWithExtension.split('.')[0]}`;
+        
+        await cloudinary.uploader.destroy(publicId);
+      } catch (err) {
+        console.error("Failed to delete old image from Cloudinary", err);
+      }
+    }
+
     material.title = title || material.title;
     material.description = description || material.description;
     
@@ -92,8 +107,25 @@ export const deleteMaterial = async (req, res) => {
     if (!material || material.teacher.toString() !== req.user._id.toString()) {
       return res.status(404).json({ success: false, message: "Material not found" });
     }
+
+    // 👈 Cloudinary থেকে ছবি ডিলিট করা
+    if (material.imageUrl) {
+      try {
+        const urlParts = material.imageUrl.split('/');
+        const fileNameWithExtension = urlParts[urlParts.length - 1];
+        const folderName = urlParts[urlParts.length - 2];
+        // public_id বের করা (যেমন: tuition_materials/abcde123)
+        const publicId = `${folderName}/${fileNameWithExtension.split('.')[0]}`;
+
+        await cloudinary.uploader.destroy(publicId);
+        console.log("Image deleted from Cloudinary:", publicId);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary delete failed:", cloudinaryError);
+      }
+    }
+
     await material.deleteOne();
-    res.json({ success: true, message: "Material deleted" });
+    res.json({ success: true, message: "Material and image deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
