@@ -7,9 +7,12 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash", // 👈 নতুন মডেল
+      model: "gemini-3.8-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
+
+    // 👈 সব প্রম্পটে ভাষার কড়া নির্দেশনা যোগ করা হলো
+    const languageRule = "CRITICAL RULE: You MUST generate the output in the EXACT SAME LANGUAGE as the provided text. If the text is in English, the questions and answers must be in English. If the text is in Bengali (Bangla), output in Bengali.";
 
     let prompt = "";
 
@@ -17,6 +20,9 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
       prompt = `
         You are an expert teacher. Generate exactly ${numQuestions} short questions from the following text.
         Difficulty level: ${difficulty}.
+        
+        ${languageRule}
+        
         Rules:
         - Each question should be answerable in 1 or 2 sentences.
         - Return ONLY a valid JSON array with this exact structure:
@@ -32,9 +38,12 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
       `;
     } else if (questionType === "creative") {
       prompt = `
-        You are an expert teacher. Generate exactly ${numQuestions} creative questions (সৃজনশীল প্রশ্ন) based on the following text.
+        You are an expert teacher. Generate exactly ${numQuestions} creative questions based on the following text.
+        
+        ${languageRule}
+        
         Rules:
-        - Each creative question must have a "stem" (উদ্দীপক) which is a short paragraph.
+        - Each creative question must have a "stem" (stimulus/উদ্দীপক) which is a short paragraph.
         - Then there should be 4 sub-questions (ক, খ, গ, ঘ).
         - Return ONLY a valid JSON array with this exact structure and DO NOT change the keys:
         [
@@ -57,6 +66,9 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
       prompt = `
         You are an expert teacher. Generate exactly ${numQuestions} multiple-choice questions (MCQs) from the following text.
         Difficulty level: ${difficulty}.
+        
+        ${languageRule}
+        
         Rules:
         - Each question must have exactly 4 options.
         - The correctAnswer must match one of the options exactly.
@@ -89,17 +101,22 @@ export const generateMCQFromImage = async (base64Image, mimeType, numQuestions =
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash", // 👈 নতুন মডেল
+      model: "gemini-3.8-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
+
+    const languageRule = "CRITICAL RULE: Read the text from the image and you MUST generate the output in the EXACT SAME LANGUAGE as the text in the image.";
 
     let prompt = "";
     
     if (questionType === "creative") {
       prompt = `
-        You are an expert teacher. Read the text from this image and generate exactly ${numQuestions} creative questions (সৃজনশীল প্রশ্ন).
+        You are an expert teacher. Read the text from this image and generate exactly ${numQuestions} creative questions.
+        
+        ${languageRule}
+        
         Rules:
-        - Each creative question must have a "stem" (উদ্দীপক) which is a short paragraph.
+        - Each creative question must have a "stem" which is a short paragraph.
         - Then there should be 4 sub-questions (ক, খ, গ, ঘ).
         - Return ONLY a valid JSON array with this exact structure:
         [
@@ -119,6 +136,9 @@ export const generateMCQFromImage = async (base64Image, mimeType, numQuestions =
     } else if (questionType === "short") {
       prompt = `
         You are an expert teacher. Read the text from this image and generate exactly ${numQuestions} short questions.
+        
+        ${languageRule}
+        
         Rules:
         - Return ONLY a valid JSON array with this exact structure:
         [
@@ -131,6 +151,9 @@ export const generateMCQFromImage = async (base64Image, mimeType, numQuestions =
     } else {
       prompt = `
         You are an expert teacher. Read the text from this image and generate exactly ${numQuestions} multiple-choice questions (MCQs).
+        
+        ${languageRule}
+        
         Rules:
         - Each question must have exactly 4 options.
         - Return ONLY a valid JSON array with this exact structure:
