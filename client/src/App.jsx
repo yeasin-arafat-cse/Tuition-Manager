@@ -24,6 +24,8 @@ import GuardianDashboard from './pages/GuardianDashboard';
 import ProfileSettings from './pages/ProfileSettings';
 import StudentProfile from './pages/StudentProfile';
 import NoticeBoard from './pages/NoticeBoard';
+import StudyMaterial from './pages/StudyMaterial';
+import StudentMaterials from './pages/StudentMaterials';
 import { useAuth } from './context/AuthContext';
 import './pages/Loader.css';
 
@@ -88,6 +90,7 @@ function App() {
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/students" element={<Students />} />
         <Route path="/teacher/students/:id" element={<StudentProfile />} />
+        <Route path="/teacher/materials" element={<StudyMaterial />} />
         <Route path="/teacher/schedule" element={<Schedule />} />
         <Route path="/teacher/attendance" element={<Attendance />} />
         <Route path="/teacher/payments" element={<Payment />} />
@@ -98,6 +101,7 @@ function App() {
 
         {/* Student Routes */}
         <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/materials" element={<StudentMaterials />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/exams" element={<StudentExamsList />} />
         <Route path="/student/exam/:id" element={<StudentExam />} />

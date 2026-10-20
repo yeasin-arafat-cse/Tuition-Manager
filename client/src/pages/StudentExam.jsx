@@ -185,7 +185,7 @@ const StudentExam = () => {
         })}
 
         <button className="add-btn" onClick={() => navigate('/student/exams')} style={{ margin: '2rem auto', display: 'block', padding: '1rem 2rem' }}>
-          {t("Back to Exams", "এক্সাম লিস্টে ফিরে যান")}
+          {t("Back to Result Screen", "রেজাল্ট স্ক্রিন ফিরে যান")}
         </button>
       </div>
     );

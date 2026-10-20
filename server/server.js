@@ -15,6 +15,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import guardianRoutes from "./routes/guardian.routes.js";
 import noticeRoutes from "./routes/notice.routes.js";
+import materialRoutes from "./routes/material.routes.js";
 
 // Load env
 dotenv.config();
@@ -52,6 +53,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/guardian", guardianRoutes);
 app.use("/api/notices", noticeRoutes);
+app.use("/api/materials", materialRoutes);
 
 // 404 handler
 app.use((req, res) => {
