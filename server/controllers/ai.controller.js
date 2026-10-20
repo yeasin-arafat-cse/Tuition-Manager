@@ -1,8 +1,7 @@
 import QuestionBank from "../models/QuestionBank.js";
 import { generateMCQFromText, generateMCQFromImage } from "../services/gemini.service.js";
-import { PdfReader } from "pdfreader"; // 👈 pdfreader ব্যবহার করা হলো
+import { PdfReader } from "pdfreader";
 
-// PDF থেকে টেক্সট বের করার ফাংশন
 const extractTextFromPdf = (buffer) => {
   return new Promise((resolve, reject) => {
     let text = "";
@@ -18,7 +17,7 @@ const extractTextFromPdf = (buffer) => {
   });
 };
 
-// @desc    Generate MCQ/Short/Creative from Text/PDF/Image
+// @desc    Generate MCQ/Short/Creative
 // @route   POST /api/ai/generate
 export const generateMCQ = async (req, res) => {
   try {
@@ -27,19 +26,16 @@ export const generateMCQ = async (req, res) => {
     let questions = [];
     let extractedText = text;
 
-    // PDF আপলোড হলে
     if (req.file && req.file.mimetype === "application/pdf") {
       extractedText = await extractTextFromPdf(req.file.buffer);
       source = "pdf";
     } 
     
-    // ইমেজ আপলোড হলে (আপাতত ইমেজের জন্য শুধু MCQ)
     if (req.file && req.file.mimetype.startsWith("image/")) {
       source = "image";
       const base64Image = req.file.buffer.toString("base64");
-      questions = await generateMCQFromImage(base64Image, req.file.mimetype, numQuestions || 10, difficulty || "medium");
+      questions = await generateMCQFromImage(base64Image, req.file.mimetype, numQuestions || 10, difficulty || "medium", questionType || "mcq");
     } 
-    // টেক্সট বা PDF থেকে প্রশ্ন তৈরি
     else if (extractedText) {
       questions = await generateMCQFromText(extractedText, numQuestions || 10, difficulty || "medium", questionType || "mcq");
     } 
@@ -59,19 +55,17 @@ export const generateMCQ = async (req, res) => {
   }
 };
 
-// @desc    Save Generated Questions to Question Bank
+// @desc    Save Generated Questions
 // @route   POST /api/ai/save
 export const saveMCQ = async (req, res) => {
   try {
     const { subject, source, questions } = req.body;
-
     const bank = await QuestionBank.create({
       teacher: req.user._id,
       subject,
       source,
       questions,
     });
-
     res.status(201).json({ success: true, bank });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -94,15 +88,9 @@ export const getQuestionBanks = async (req, res) => {
 export const deleteQuestionBank = async (req, res) => {
   try {
     const bank = await QuestionBank.findById(req.params.id);
-
-    if (!bank) {
+    if (!bank || bank.teacher.toString() !== req.user._id.toString()) {
       return res.status(404).json({ success: false, message: "Question Bank not found" });
     }
-
-    if (bank.teacher.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ success: false, message: "Not authorized" });
-    }
-
     await bank.deleteOne();
     res.json({ success: true, message: "Question Bank deleted" });
   } catch (error) {
