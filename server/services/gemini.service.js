@@ -38,7 +38,7 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
         - Each creative question must have a "stem" (উদ্দীপক) which is a short paragraph.
         - Then there should be 4 sub-questions (ক, খ, গ, ঘ).
         - "ক" should be knowledge-based, "খ" comprehension, "গ" application, and "ঘ" higher-order.
-        - Return ONLY a valid JSON array with this exact structure:
+        - Return ONLY a valid JSON array with this exact structure and DO NOT change the keys:
         [
           {
             "stem": "Stem paragraph here",

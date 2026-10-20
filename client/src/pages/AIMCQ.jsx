@@ -12,7 +12,7 @@ const AIMCQ = () => {
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
   const [subject, setSubject] = useState('');
-  const [questionType, setQuestionType] = useState('mcq');
+  const [questionType, setQuestionType] = useState('mcq'); 
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
@@ -208,11 +208,11 @@ const AIMCQ = () => {
 
                     {questionType === 'creative' && (
                       <div style={{ padding: '0.5rem', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                        <div style={{ marginBottom: '10px', fontWeight: 'bold', color: 'var(--primary)' }}>উদ্দীপক: {q.stem}</div>
-                        <div style={{ marginBottom: '5px' }}><strong>{q.questionA}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerA}</span></div>
-                        <div style={{ marginBottom: '5px' }}><strong>{q.questionB}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerB}</span></div>
-                        <div style={{ marginBottom: '5px' }}><strong>{q.questionC}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerC}</span></div>
-                        <div><strong>{q.questionD}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerD}</span></div>
+                        <div style={{ marginBottom: '10px', fontWeight: 'bold', color: 'var(--primary)' }}>উদ্দীপক: {q.stem || 'N/A'}</div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionA || 'N/A'}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerA || 'N/A'}</span></div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionB || 'N/A'}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerB || 'N/A'}</span></div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionC || 'N/A'}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerC || 'N/A'}</span></div>
+                        <div><strong>{q.questionD || 'N/A'}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerD || 'N/A'}</span></div>
                       </div>
                     )}
                   </div>
