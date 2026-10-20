@@ -12,7 +12,6 @@ const StudyMaterial = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
   
-  // ইমেজ ফাইল ও প্রিভিউ
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   
@@ -73,7 +72,7 @@ const StudyMaterial = () => {
       data.append('description', formData.description);
       
       if (imageFile) {
-        data.append('imageFile', imageFile);
+        data.append('imageFile', imageFile); 
       }
 
       if (editingMaterial) {

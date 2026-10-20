@@ -5,7 +5,15 @@ import Student from "../models/Student.js";
 // @route   POST /api/materials
 export const createMaterial = async (req, res) => {
   try {
-    const { studentId, title, description, imageUrl } = req.body;
+    const body = req.body || {}; 
+    const { studentId, title, description } = body;
+    
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "Student ID is required" });
+    }
+
+    const imageUrl = req.file ? req.file.path : null; 
+
     const material = await Material.create({
       teacher: req.user._id,
       student: studentId,
@@ -53,7 +61,9 @@ export const getStudentMaterials = async (req, res) => {
 // @route   PUT /api/materials/:id
 export const updateMaterial = async (req, res) => {
   try {
-    const { title, description, imageUrl } = req.body;
+    const body = req.body || {}; 
+    const { title, description } = body;
+    
     let material = await Material.findById(req.params.id);
 
     if (!material || material.teacher.toString() !== req.user._id.toString()) {
@@ -62,7 +72,10 @@ export const updateMaterial = async (req, res) => {
 
     material.title = title || material.title;
     material.description = description || material.description;
-    if (imageUrl) material.imageUrl = imageUrl;
+    
+    if (req.file) {
+      material.imageUrl = req.file.path;
+    }
 
     await material.save();
     res.json({ success: true, material });
