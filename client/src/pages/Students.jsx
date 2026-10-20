@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // 👈 নতুন
+import { useNavigate } from 'react-router-dom'; 
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
@@ -8,9 +8,12 @@ import './Students.css';
 const Students = () => {
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [classFilter, setClassFilter] = useState(''); // 👈 ক্লাস ফিল্টার
+  const [editingStudent, setEditingStudent] = useState(null); 
+  
+  const [classFilter, setClassFilter] = useState(''); 
   const { t } = useApp();
   const navigate = useNavigate();
 
@@ -48,13 +51,19 @@ const Students = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.post('/students', formData);
-      toast.success(t("Student Added!", "স্টুডেন্ট যোগ হয়েছে!"));
+      if (editingStudent) {
+        await api.put(`/students/${editingStudent._id}`, formData);
+        toast.success(t("Student Updated!", "স্টুডেন্ট আপডেট হয়েছে!"));
+      } else {
+        await api.post('/students', formData);
+        toast.success(t("Student Added!", "স্টুডেন্ট যোগ হয়েছে!"));
+      }
       setIsModalOpen(false);
+      setEditingStudent(null);
       setFormData({ name: '', class: '', subject: '', guardianName: '', guardianPhone: '', monthlyFee: '', email: '', joinDate: new Date().toISOString().split('T')[0] });
       fetchStudents();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add student');
+      toast.error(error.response?.data?.message || 'Failed to save student');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,9 +80,23 @@ const Students = () => {
     }
   };
 
+  const handleEditClick = (student) => {
+    setEditingStudent(student);
+    setFormData({
+      name: student.name,
+      class: student.class,
+      subject: student.subject,
+      guardianName: student.guardianName,
+      guardianPhone: student.guardianPhone,
+      monthlyFee: student.monthlyFee,
+      email: student.email,
+      joinDate: new Date(student.joinDate).toISOString().split('T')[0]
+    });
+    setIsModalOpen(true);
+  };
+
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
 
-  // 👈 ক্লাস ফিল্টার লজিক
   const filteredStudents = classFilter 
     ? students.filter(s => s.class.toLowerCase().includes(classFilter.toLowerCase()))
     : students;
@@ -91,7 +114,14 @@ const Students = () => {
             onChange={(e) => setClassFilter(e.target.value)}
             style={{ padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
           />
-          <button className="add-btn" onClick={() => setIsModalOpen(true)}>
+          <button 
+            className="add-btn" 
+            onClick={() => {
+              setEditingStudent(null);
+              setFormData({ name: '', class: '', subject: '', guardianName: '', guardianPhone: '', monthlyFee: '', email: '', joinDate: new Date().toISOString().split('T')[0] });
+              setIsModalOpen(true);
+            }}
+          >
             + {t("Add Student", "স্টুডেন্ট যোগ করুন")}
           </button>
         </div>
@@ -115,7 +145,6 @@ const Students = () => {
             ) : (
               filteredStudents.map((student) => (
                 <tr key={student._id}>
-                  {/* 👈 নামে ক্লিক করলে প্রোফাইলে যাবে */}
                   <td 
                     onClick={() => navigate(`/teacher/students/${student._id}`)}
                     style={{ color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }}
@@ -125,8 +154,14 @@ const Students = () => {
                   <td>{student.class}</td>
                   <td>{student.subject}</td>
                   <td>{student.guardianName} <br/><small>{student.guardianPhone}</small></td>
-                  <td>৳ {student.monthlyFee}</td>
+                  <td>Tk {student.monthlyFee}</td>
                   <td>
+                    <button 
+                      onClick={() => handleEditClick(student)}
+                      style={{ color: 'var(--primary)', background: 'none', fontWeight: 'bold', marginRight: '10px' }}
+                    >
+                      {t("Edit", "এডিট")}
+                    </button>
                     <button onClick={() => deleteStudent(student._id)} style={{ color: 'var(--danger)', background: 'none', fontWeight: 'bold' }}>
                       {t("Delete", "ডিলিট")}
                     </button>
@@ -138,11 +173,12 @@ const Students = () => {
         </table>
       </div>
 
+      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>{t("Add New Student", "নতুন স্টুডেন্ট")}</h2>
+              <h2>{editingStudent ? t("Edit Student", "স্টুডেন্ট এডিট করুন") : t("Add New Student", "নতুন স্টুডেন্ট")}</h2>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
             </div>
             
@@ -187,19 +223,16 @@ const Students = () => {
                 </div>
                 <div className="form-group">
                   <label>{t("Student Email", "স্টুডেন্টের ইমেইল")}</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="student@mail.com" required />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="student@mail.com" required disabled={editingStudent ? true : false} style={{ opacity: editingStudent ? 0.6 : 1 }} />
                 </div>
               </div>
-              <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
-                The student will use this email to register.
-              </small>
 
               <div className="btn-group">
                 <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>
                   {t("Cancel", "বাতিল")}
                 </button>
                 <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                  {isSubmitting ? t("Saving...", "সেভ হচ্ছে...") : t("Save", "সেভ করুন")}
+                  {isSubmitting ? t("Saving...", "সেভ হচ্ছে...") : (editingStudent ? t("Update", "আপডেট") : t("Save", "সেভ করুন"))}
                 </button>
               </div>
             </form>

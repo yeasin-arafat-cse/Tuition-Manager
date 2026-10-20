@@ -29,15 +29,25 @@ export const createExam = async (req, res) => {
   }
 };
 
-// @desc    Get exam by ID (For Student to take exam)
+// @desc    Get exam by ID (For Student to take exam or view result)
 // @route   GET /api/exams/:id
 export const getExamById = async (req, res) => {
   try {
-    const exam = await Exam.findById(req.params.id).select("-questions.correctAnswer");
+    let exam = await Exam.findById(req.params.id);
+    
     if (!exam) {
       return res.status(404).json({ success: false, message: "Exam not found" });
     }
-    res.json({ success: true, exam });
+
+    // 👈 যদি স্টুডেন্ট এবং এক্সামটি সাবমিট হয়ে থাকে, তবে সঠিক উত্তরসহ সব দেখাবে
+    if (req.user.role === 'student' && exam.status === 'submitted') {
+      return res.json({ success: true, exam, isResultView: true });
+    }
+
+    // 👈 যদি এক্সাম এখনো সাবমিট না হয়, তবে সঠিক উত্তর লুকিয়ে রাখব
+    exam = await Exam.findById(req.params.id).select("-questions.correctAnswer");
+    res.json({ success: true, exam, isResultView: false });
+    
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -52,6 +62,11 @@ export const submitExam = async (req, res) => {
 
     if (!exam) {
       return res.status(404).json({ success: false, message: "Exam not found" });
+    }
+
+    // 👈 চেক করা এটি আগেই সাবমিট হয়েছে কিনা
+    if (exam.status === 'submitted') {
+      return res.status(400).json({ success: false, message: "You have already submitted this exam" });
     }
 
     let score = 0;
@@ -122,12 +137,10 @@ export const updateExam = async (req, res) => {
       return res.status(404).json({ success: false, message: "Exam not found" });
     }
 
-    // চেক করা এই এক্সামটি এই টিচারের কিনা
     if (exam.teacher.toString() !== req.user._id.toString()) {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
-    // আপডেট করা
     exam.title = title || exam.title;
     exam.duration = duration || exam.duration;
     
@@ -152,7 +165,7 @@ export const deleteExam = async (req, res) => {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
-    await exam.deleteOne(); // ডেটাবেস থেকে সম্পূর্ণ মুছে যাবে
+    await exam.deleteOne();
     res.json({ success: true, message: "Exam deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
