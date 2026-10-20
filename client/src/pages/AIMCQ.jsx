@@ -12,6 +12,7 @@ const AIMCQ = () => {
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
   const [subject, setSubject] = useState('');
+  const [questionType, setQuestionType] = useState('mcq');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
@@ -53,6 +54,7 @@ const AIMCQ = () => {
       formData.append('difficulty', difficulty);
       formData.append('subject', subject || "General");
       formData.append('sourceType', inputType);
+      formData.append('questionType', questionType); 
 
       const res = await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -67,13 +69,11 @@ const AIMCQ = () => {
     }
   };
 
-  // 👈 একসাথে সেভ এবং PDF ডাউনলোড
   const handleSaveAndDownload = async () => {
     if (generatedQuestions.length === 0) return;
     setIsSaving(true);
 
     try {
-      // ১. ডেটাবেসে সেভ করা (শুধু টেক্সট)
       await api.post('/ai/save', {
         subject: subject || "General",
         source: inputType,
@@ -82,61 +82,12 @@ const AIMCQ = () => {
       
       toast.success(t("Saved to Question Bank!", "প্রশ্ন ব্যাংকে সেভ হয়েছে!"));
       
-      // ২. PDF জেনারেট করার জন্য নতুন উইন্ডো (কোনো ফাইল সার্ভারে যাচ্ছে না)
-      const printWindow = window.open('', '_blank');
-      let htmlContent = `
-        <html>
-        <head>
-          <title>MCQ - ${subject || 'Questions'}</title>
-          <style>
-            body { font-family: 'Arial', sans-serif; padding: 40px; line-height: 1.6; color: #333; }
-            h1 { text-align: center; color: #4f46e5; margin-bottom: 5px; }
-            .header-info { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; border-bottom: 2px solid #eee; padding-bottom: 20px;}
-            .q-box { margin-bottom: 25px; page-break-inside: avoid; }
-            .q-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-            .q-option { margin-left: 20px; margin-bottom: 5px; font-size: 15px; }
-            .answer { margin-top: 10px; font-size: 14px; color: #10b981; font-weight: bold; margin-left: 20px;}
-            @media print {
-              body { padding: 0; }
-              .q-box { page-break-inside: avoid; }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>${subject || "General"} - MCQ Test</h1>
-          <div class="header-info">
-            <strong>Total Questions:</strong> ${generatedQuestions.length} | <strong>Difficulty:</strong> ${difficulty}
-          </div>
-      `;
-
-      generatedQuestions.forEach((q, index) => {
-        htmlContent += `
-          <div class="q-box">
-            <div class="q-title">${index + 1}. ${q.question}</div>
-            ${q.options.map((opt, i) => `<div class="q-option">${String.fromCharCode(65 + i)}) ${opt}</div>`).join('')}
-            <div class="answer">Answer: ${q.correctAnswer}</div>
-          </div>
-        `;
-      });
-
-      htmlContent += `</body></html>`;
-
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      
-      // পেজ লোড হওয়ার পর অটোমেটিক প্রিন্ট (Save as PDF) ডায়ালগ ওপেন হবে
-      printWindow.onload = () => {
-        printWindow.focus();
-        printWindow.print();
-      };
-
-      // ফর্ম ক্লিয়ার করা
       setGeneratedQuestions([]);
       setText('');
       setFile(null);
       
     } catch (error) {
-      toast.error('Failed to save and download');
+      toast.error('Failed to save');
     } finally {
       setIsSaving(false);
     }
@@ -145,11 +96,10 @@ const AIMCQ = () => {
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">{t("AI MCQ Generator", "এআই প্রশ্ন তৈরি")}</h1>
+        <h1 className="page-title">{t("AI Question Generator", "এআই প্রশ্ন তৈরি")}</h1>
       </div>
 
       <div className="ai-container">
-        {/* Left Side: Input */}
         <div className="ai-panel">
           <h2>1. {t("Input Source", "ইনপুট দিন")}</h2>
           
@@ -185,10 +135,18 @@ const AIMCQ = () => {
                 <label htmlFor="file-upload" style={{ cursor: 'pointer', color: 'var(--primary)', fontWeight: '600' }}>
                   {file ? `Selected: ${file.name}` : `Click to Upload ${inputType.toUpperCase()}`}
                 </label>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Max size: 5MB</p>
               </div>
             )}
-            
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label>{t("Question Type", "প্রশ্নের ধরন")}</label>
+              <select value={questionType} onChange={(e) => setQuestionType(e.target.value)}>
+                <option value="mcq">{t("Multiple Choice (MCQ)", "বহুনির্বাচনি (MCQ)")}</option>
+                <option value="short">{t("Short Question", "অতি সংক্ষিপ্ত প্রশ্ন")}</option>
+                <option value="creative">{t("Creative Question", "সৃজনশীল প্রশ্ন")}</option>
+              </select>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>{t("Questions", "প্রশ্ন সংখ্যা")}</label>
@@ -211,12 +169,11 @@ const AIMCQ = () => {
 
             <button type="submit" className="auth-btn" disabled={isGenerating} style={{ width: '100%' }}>
               {isGenerating && <span className="ai-loader"></span>}
-              {isGenerating ? t("Generating...", "তৈরি হচ্ছে...") : t("Generate MCQs", "প্রশ্ন তৈরি করুন")}
+              {isGenerating ? t("Generating...", "তৈরি হচ্ছে...") : t("Generate Questions", "প্রশ্ন তৈরি করুন")}
             </button>
           </form>
         </div>
 
-        {/* Right Side: Output */}
         <div className="ai-panel">
           <h2>2. {t("Generated Questions", "তৈরি হওয়া প্রশ্ন")}</h2>
           
@@ -229,26 +186,46 @@ const AIMCQ = () => {
               <div className="q-list">
                 {generatedQuestions.map((q, index) => (
                   <div key={index} className="q-card">
-                    <div className="q-title">{index + 1}. {q.question}</div>
-                    <div className="q-options">
-                      {q.options.map((opt, i) => (
-                        <div key={i} className={`q-option ${opt === q.correctAnswer ? 'correct' : ''}`}>
-                          {opt === q.correctAnswer ? '✅' : '⚪'} {opt}
+                    {questionType === 'mcq' && (
+                      <>
+                        <div className="q-title">{index + 1}. {q.question}</div>
+                        <div className="q-options">
+                          {q.options?.map((opt, i) => (
+                            <div key={i} className={`q-option ${opt === q.correctAnswer ? 'correct' : ''}`}>
+                              {opt === q.correctAnswer ? '✅' : '⚪'} {opt}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    )}
+
+                    {questionType === 'short' && (
+                      <>
+                        <div className="q-title">{index + 1}. {q.question}</div>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--secondary)', marginTop: '5px' }}>Ans: {q.correctAnswer}</p>
+                      </>
+                    )}
+
+                    {questionType === 'creative' && (
+                      <div style={{ padding: '0.5rem', background: 'var(--bg-main)', borderRadius: '8px' }}>
+                        <div style={{ marginBottom: '10px', fontWeight: 'bold', color: 'var(--primary)' }}>উদ্দীপক: {q.stem}</div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionA}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerA}</span></div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionB}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerB}</span></div>
+                        <div style={{ marginBottom: '5px' }}><strong>{q.questionC}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerC}</span></div>
+                        <div><strong>{q.questionD}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerD}</span></div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
               
-              {/* 👈 সেভ এবং PDF ডাউনলোড বাটন */}
               <button 
                 className="auth-btn" 
                 onClick={handleSaveAndDownload} 
                 disabled={isSaving}
                 style={{ width: '100%', marginTop: '1rem', backgroundColor: 'var(--secondary)' }}
               >
-                {isSaving ? t("Saving...", "সেভ হচ্ছে...") : t("Save & Download PDF", "সেভ ও পিডিএফ ডাউনলোড")}
+                {isSaving ? t("Saving...", "সেভ হচ্ছে...") : t("Save to Question Bank", "প্রশ্ন ব্যাংকে সেভ করুন")}
               </button>
             </>
           )}

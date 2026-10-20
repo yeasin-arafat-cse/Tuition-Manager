@@ -29,7 +29,7 @@ export const createExam = async (req, res) => {
   }
 };
 
-// @desc    Get exam by ID (For Student to take exam or view result)
+// @desc    Get exam by ID
 // @route   GET /api/exams/:id
 export const getExamById = async (req, res) => {
   try {
@@ -39,13 +39,11 @@ export const getExamById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Exam not found" });
     }
 
-    // 👈 যদি স্টুডেন্ট এবং এক্সামটি সাবমিট হয়ে থাকে, তবে সঠিক উত্তরসহ সব দেখাবে
     if (req.user.role === 'student' && exam.status === 'submitted') {
       return res.json({ success: true, exam, isResultView: true });
     }
 
-    // 👈 যদি এক্সাম এখনো সাবমিট না হয়, তবে সঠিক উত্তর লুকিয়ে রাখব
-    exam = await Exam.findById(req.params.id).select("-questions.correctAnswer");
+    exam = await Exam.findById(req.params.id).select("-questions.correctAnswer -questions.answerA -questions.answerB -questions.answerC -questions.answerD");
     res.json({ success: true, exam, isResultView: false });
     
   } catch (error) {
@@ -57,14 +55,13 @@ export const getExamById = async (req, res) => {
 // @route   POST /api/exams/:id/submit
 export const submitExam = async (req, res) => {
   try {
-    const { answers } = req.body;
+    const { answers } = req.body; // Array of { questionId, selectedOption, textAnswer }
     const exam = await Exam.findById(req.params.id);
 
     if (!exam) {
       return res.status(404).json({ success: false, message: "Exam not found" });
     }
 
-    // 👈 চেক করা এটি আগেই সাবমিট হয়েছে কিনা
     if (exam.status === 'submitted') {
       return res.status(400).json({ success: false, message: "You have already submitted this exam" });
     }
@@ -74,9 +71,17 @@ export const submitExam = async (req, res) => {
 
     exam.questions.forEach((q) => {
       const studentAns = answers.find((a) => a.questionId === q._id.toString());
+      
       if (studentAns) {
-        studentAnswers.push(studentAns);
-        if (studentAns.selectedOption === q.correctAnswer) {
+        // উত্তর সেভ করা
+        studentAnswers.push({
+          questionId: q._id,
+          selectedOption: studentAns.selectedOption || null,
+          textAnswer: studentAns.textAnswer || null
+        });
+
+        // স্কোরিং (শুধু MCQ এর জন্য)
+        if (q.options && q.options.length > 0 && studentAns.selectedOption === q.correctAnswer) {
           score++;
         }
       }
@@ -103,7 +108,7 @@ export const getStudentExams = async (req, res) => {
     }
 
     const exams = await Exam.find({ student: studentProfile._id })
-      .select("-questions.correctAnswer")
+      .select("-questions.correctAnswer -questions.answerA -questions.answerB -questions.answerC -questions.answerD")
       .sort({ createdAt: -1 });
       
     res.json({ success: true, exams });

@@ -32,7 +32,7 @@ const QuestionBank = () => {
     try {
       await api.delete(`/ai/question-bank/${id}`);
       toast.success(t("Deleted!", "ডিলিট হয়েছে!"));
-      fetchBanks(); // লিস্ট রিফ্রেশ
+      fetchBanks();
     } catch (error) {
       toast.error('Failed to delete');
     }
@@ -54,7 +54,7 @@ const QuestionBank = () => {
       {banks.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
           <h3>{t("No questions saved yet.", "এখনো কোনো প্রশ্ন সেভ করা হয়নি।")}</h3>
-          <p>Go to AI MCQ page to generate and save questions.</p>
+          <p>Go to AI page to generate and save questions.</p>
         </div>
       ) : (
         <div className="exam-list">
@@ -73,7 +73,6 @@ const QuestionBank = () => {
                 </div>
               </div>
 
-              {/* বাটন গ্রুপ */}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', width: '100%' }}>
                 <button 
                   className="add-btn" 
@@ -107,14 +106,40 @@ const QuestionBank = () => {
             <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
               {selectedBank.questions.map((q, index) => (
                 <div key={index} className="q-card" style={{ marginBottom: '1rem', backgroundColor: 'var(--bg-main)' }}>
-                  <div className="q-title">{index + 1}. {q.question}</div>
-                  <div className="q-options">
-                    {q.options.map((opt, i) => (
-                      <div key={i} className={`q-option ${opt === q.correctAnswer ? 'correct' : ''}`}>
-                        {opt === q.correctAnswer ? '✅' : '⚪'} {opt}
+                  
+                  {/* MCQ */}
+                  {q.question && q.options && q.options.length > 0 && (
+                    <>
+                      <div className="q-title">{index + 1}. {q.question}</div>
+                      <div className="q-options">
+                        {q.options.map((opt, i) => (
+                          <div key={i} className={`q-option ${opt === q.correctAnswer ? 'correct' : ''}`}>
+                            {opt === q.correctAnswer ? '✅' : '⚪'} {opt}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
+
+                  {/* Short Question */}
+                  {q.question && (!q.options || q.options.length === 0) && !q.stem && (
+                    <>
+                      <div className="q-title">{index + 1}. {q.question}</div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--secondary)', marginTop: '5px' }}>Ans: {q.correctAnswer}</p>
+                    </>
+                  )}
+
+                  {/* Creative Question */}
+                  {q.stem && (
+                    <>
+                      <div style={{ marginBottom: '10px', fontWeight: 'bold', color: 'var(--primary)' }}>{index + 1}. উদ্দীপক: {q.stem}</div>
+                      <div style={{ marginBottom: '5px' }}><strong>{q.questionA}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerA}</span></div>
+                      <div style={{ marginBottom: '5px' }}><strong>{q.questionB}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerB}</span></div>
+                      <div style={{ marginBottom: '5px' }}><strong>{q.questionC}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerC}</span></div>
+                      <div><strong>{q.questionD}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerD}</span></div>
+                    </>
+                  )}
+
                 </div>
               ))}
             </div>
