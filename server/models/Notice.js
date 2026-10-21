@@ -7,6 +7,11 @@ const noticeSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      default: null, // 👈 null মানে সব স্টুডেন্টের জন্য
+    },
     title: {
       type: String,
       required: true,

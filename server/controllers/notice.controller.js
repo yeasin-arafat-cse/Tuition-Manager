@@ -4,9 +4,11 @@ import Notice from "../models/Notice.js";
 // @route   POST /api/notices
 export const createNotice = async (req, res) => {
   try {
-    const { title, message } = req.body;
+    const { title, message, studentId } = req.body; 
+    
     const notice = await Notice.create({
       teacher: req.user._id,
+      student: studentId || null, 
       title,
       message,
     });
@@ -20,7 +22,9 @@ export const createNotice = async (req, res) => {
 // @route   GET /api/notices
 export const getNotices = async (req, res) => {
   try {
-    const notices = await Notice.find({ teacher: req.user._id }).sort({ createdAt: -1 });
+    const notices = await Notice.find({ teacher: req.user._id })
+      .populate("student", "name class")
+      .sort({ createdAt: -1 });
     res.json({ success: true, notices });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

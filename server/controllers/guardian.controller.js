@@ -1,7 +1,7 @@
 import Student from "../models/Student.js";
 import Payment from "../models/Payment.js";
 import Attendance from "../models/Attendance.js";
-import Notice from "../models/Notice.js"; // 👈 নতুন ইমপোর্ট
+import Notice from "../models/Notice.js";
 
 // @desc    Get Guardian's child data
 // @route   GET /api/guardian/dashboard
@@ -28,8 +28,14 @@ export const getGuardianDashboard = async (req, res) => {
 
     const payments = await Payment.find({ student: student._id }).sort({ createdAt: -1 }).limit(5);
 
-    // 👈 নতুন: টিচারের নোটিশ আনা
-    const notices = await Notice.find({ teacher: student.teacher })
+    // 👈 নতুন: নির্দিষ্ট স্টুডেন্ট অথবা সবার জন্য নোটিশ আনা
+    const notices = await Notice.find({ 
+      teacher: student.teacher,
+      $or: [
+        { student: null }, 
+        { student: student._id } 
+      ]
+    })
       .sort({ createdAt: -1 })
       .limit(3);
 
@@ -39,7 +45,7 @@ export const getGuardianDashboard = async (req, res) => {
       attendanceSummary: { present: totalPresent, absent: totalAbsent },
       recentAttendance,
       payments,
-      notices // 👈 নোটিশ পাঠানো হলো
+      notices
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 👈 নতুন ইমপোর্ট
+import { useNavigate } from 'react-router-dom'; 
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 import './Students.css'; 
 
 const ProfileSettings = () => {
-  const { user, logout } = useAuth(); // 👈 logout ফাংশন নিন
+  const { user, logout } = useAuth(); 
   const { t } = useApp();
-  const navigate = useNavigate(); // 👈 navigate নিন
+  const navigate = useNavigate(); 
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -66,7 +66,6 @@ const ProfileSettings = () => {
     }
   };
 
-  // 👈 নতুন: Logout হ্যান্ডলার
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -78,7 +77,8 @@ const ProfileSettings = () => {
         <h1 className="page-title">{t("Profile Settings", "প্রোফাইল সেটিংস")}</h1>
       </div>
 
-      <div className="ai-container" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      {/* 👈 এখানে settings-grid ব্যবহার করা হলো */}
+      <div className="settings-grid">
         {/* Update Profile Form */}
         <div className="ai-panel">
           <h2>👤 {t("Update Profile", "প্রোফাইল আপডেট করুন")}</h2>
@@ -156,7 +156,7 @@ const ProfileSettings = () => {
         </div>
       </div>
 
-      {/* 👈 নতুন: Logout সেকশন */}
+      {/* Logout সেকশন */}
       <div className="dashboard-section" style={{ marginTop: '2rem', border: '1px solid var(--danger)' }}>
         <h2 className="section-title" style={{ color: 'var(--danger)' }}>⚠️ {t("Danger Zone", "সতর্কতা")}</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
