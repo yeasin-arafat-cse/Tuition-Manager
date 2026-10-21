@@ -76,3 +76,61 @@ button {
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+/* =========================================
+   Premium Gradient Left Border (Rounded Corners)
+   ========================================= */
+
+/* ১. মূল কার্ডগুলো সেটআপ করা */
+.stat-card,
+.dashboard-section,
+.ai-panel,
+.exam-card,
+.attendance-card,
+.table-container,
+.day-row,
+.setup-sidebar,
+.modal-content {
+  position: relative !important;
+  border-left: 1px solid transparent !important; /* ডিফল্ট বর্ডার লুকানো হলো */
+  border-radius: 12px !important; /* সব কার্ডের কর্নার গোল করা হলো */
+  overflow: hidden !important; /* যাতে ভেতরের লাইন বাইরে না যায় */
+}
+
+/* ২. বাম দিকের Gradient লাইন */
+.stat-card::before,
+.dashboard-section::before,
+.ai-panel::before,
+.exam-card::before,
+.attendance-card::before,
+.table-container::before,
+.day-row::before,
+.setup-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px; /* লাইনের মোটা */
+  height: 100%;
+  /* 👈 Gradient কালার (নীল থেকে সবুজ) */
+  background: linear-gradient(to bottom, var(--primary), var(--secondary), var(--text-muted));
+  z-index: 10;
+}
+
+/* ৩. ডার্ক মোডে Gradient আরও উজ্জ্বল হবে */
+[data-theme="dark"] .stat-card::before,
+[data-theme="dark"] .dashboard-section::before,
+[data-theme="dark"] .ai-panel::before {
+  background: linear-gradient(to bottom, #818cf8, #34d399);
+}
+
+/* ৪. আগে যেসব জায়গায় আলাদা রঙের বর্ডার ছিল (যেমন নোটিশ বোর্ড), সেগুলোর জন্য */
+div[style*="border-left: 4px solid var(--secondary)"]::before {
+  background: var(--secondary) !important;
+}
+div[style*="border-left: 4px solid var(--danger)"]::before {
+  background: var(--danger) !important;
+}
+div[style*="border-left: 4px solid var(--warning)"]::before {
+  background: var(--warning) !important;
+}
