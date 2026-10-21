@@ -66,7 +66,12 @@ const Layout = () => {
     <div className="layout-container">
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <span>🎓</span> Tuition Manager
+          <img 
+            src="/pwa-192x192.png" 
+            alt="TM Logo" 
+            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} 
+          /> 
+          Tuition Manager
         </div>
         <div className="sidebar-menu">
           {menuItems.map((item) => (
