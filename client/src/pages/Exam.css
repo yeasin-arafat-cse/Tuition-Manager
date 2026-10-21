@@ -86,7 +86,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.8rem 1rem; /* 👈 প্যাডিং কমানো হলো */
+  padding: 0.5rem 1rem; /* 👈 প্যাডিং কমানো হলো */
   margin-bottom: 1rem; /* 👈 নিচের গ্যাপ কমানো হলো */
   border-bottom: 2px solid var(--border);
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -95,7 +95,7 @@
 /* মোবাইলের জন্য */
 @media (max-width: 600px) {
   .exam-header-sticky {
-    padding: 0.6rem 1rem;
+    padding: 0.3rem 1rem;
   }
   
   .exam-header-sticky h1 {
