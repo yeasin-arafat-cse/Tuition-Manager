@@ -86,8 +86,23 @@ input:checked + .slider:before {
   align-items: start;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .admin-grid-layout {
-    grid-template-columns: 1fr; /* মোবাইলে এক কলাম হবে */
+    grid-template-columns: 1fr !important; /* 👈 মোবাইলে এক কলামে নিচে নিচে আসবে */
+  }
+  
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important; /* 👈 মোবাইলে ২টি কার্ড পাশাপাশি থাকবে */
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* টেবিলে হরাইজন্টাল স্ক্রল যাতে মোবাইলে ভেঙে না যায় */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
