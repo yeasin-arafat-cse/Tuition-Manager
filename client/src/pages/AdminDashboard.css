@@ -84,25 +84,29 @@ input:checked + .slider:before {
   grid-template-columns: 1fr 1.5fr;
   gap: 1.5rem;
   align-items: start;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .admin-grid-layout {
-    grid-template-columns: 1fr !important; /* 👈 মোবাইলে এক কলামে নিচে নিচে আসবে */
+    grid-template-columns: 1fr !important; /* 👈 এক কলামে নিচে নিচে আসবে */
+    gap: 1rem;
   }
   
   .admin-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important; /* 👈 মোবাইলে ২টি কার্ড পাশাপাশি থাকবে */
+    grid-template-columns: repeat(2, 1fr) !important; 
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  /* টেবিলে হরাইজন্টাল স্ক্রল যাতে মোবাইলে ভেঙে না যায় */
+  /* মোবাইলে টেবিলের ভেতরের জিনিস যাতে বাইরে না যায় */
   .table-container {
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* বাটনগুলো যাতে মোবাইলে ছোট হয়ে ফিট করে */
+  table th, table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
 }
