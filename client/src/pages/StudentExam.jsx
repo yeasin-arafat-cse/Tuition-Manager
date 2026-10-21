@@ -166,7 +166,7 @@ const StudentExam = () => {
                 </div>
               )}
 
-                            {q.stem && (
+              {q.stem && (
                 <div style={{ marginTop: '10px' }}>
                   <p><strong>{q.questionA}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerA}</span></p>
                   <p><strong>{q.questionB}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerB}</span></p>
@@ -174,7 +174,6 @@ const StudentExam = () => {
                   <p><strong>{q.questionD}</strong> <br/> <span style={{ color: 'var(--secondary)' }}>Ans: {q.answerD}</span></p>
                 </div>
               )}
-
             </div>
           );
         })}
@@ -189,20 +188,26 @@ const StudentExam = () => {
   // এক্সাম দেওয়ার স্ক্রিন
   return (
     <div className="exam-container animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '2px solid var(--border)', paddingBottom: '1rem' }}>
+      
+      {/* 👈 Sticky Exam Header */}
+      <div className="exam-header-sticky">
         <div>
-          <h1 style={{ marginBottom: '0.5rem' }}>{exam.title}</h1>
-          <p style={{ color: 'var(--text-muted)' }}>{t("Total Questions:", "মোট প্রশ্ন:")} {exam.questions.length}</p>
+          <h1 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>{exam.title}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>
+            {t("Total Questions:", "মোট প্রশ্ন:")} {exam.questions.length}
+          </p>
         </div>
         
         <div style={{ 
           background: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-main)', 
           color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-main)',
-          padding: '1rem 1.5rem', borderRadius: '8px', textAlign: 'center',
+          padding: '0.8rem 1.5rem', 
+          borderRadius: '8px', 
+          textAlign: 'center',
           border: `1px solid ${timeLeft < 60 ? 'var(--danger)' : 'var(--border)'}`
         }}>
-          <p style={{ fontSize: '0.8rem', color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-muted)' }}>⏱️ {t("Time Left", "বাকি সময়")}</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatTime(timeLeft)}</h3>
+          <p style={{ fontSize: '0.8rem', color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-muted)', margin: 0 }}>⏱️ {t("Time Left", "বাকি সময়")}</p>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{formatTime(timeLeft)}</h3>
         </div>
       </div>
 

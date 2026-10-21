@@ -87,7 +87,7 @@ input:checked + .slider:before {
   width: 100%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .admin-grid-layout {
     grid-template-columns: 1fr !important; /* 👈 এক কলামে নিচে নিচে আসবে */
     gap: 1rem;
