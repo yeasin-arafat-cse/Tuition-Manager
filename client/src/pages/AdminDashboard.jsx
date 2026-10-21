@@ -12,14 +12,11 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useApp();
 
-  // সার্চ এবং ফিল্টার
   const [searchTerm, setSearchTerm] = useState('');
   
-  // ইউজার ডিটেইলস মডাল
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // গ্লোবাল নোটিশ ফর্ম
   const [noticeData, setNoticeData] = useState({ title: '', message: '' });
   const [isSendingNotice, setIsSendingNotice] = useState(false);
 
@@ -51,6 +48,19 @@ const AdminDashboard = () => {
       fetchData();
     } catch (error) {
       toast.error('Failed to update status');
+    }
+  };
+
+  // 👈 নতুন: ইউজার ডিলিট করার ফাংশন
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm(t("Are you sure? This will delete the user and ALL their data permanently.", "আপনি কি নিশ্চিত? এটি ইউজার এবং তার সব ডেটা স্থায়ীভাবে ডিলিট করে দিবে।"))) return;
+    
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      toast.success(t("User deleted!", "ইউজার ডিলিট হয়েছে!"));
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete user');
     }
   };
 
@@ -89,7 +99,6 @@ const AdminDashboard = () => {
 
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
 
-  // সার্চ ফিল্টার
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -242,13 +251,22 @@ const AdminDashboard = () => {
                       </td>
                       <td>
                         {u.role !== 'admin' && (
-                          <>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             {u.status === 'approved' ? (
                               <button onClick={() => handleStatusChange(u._id, 'blocked')} style={{ background: 'none', color: 'var(--danger)', fontWeight: 'bold' }}>Block</button>
                             ) : (
                               <button onClick={() => handleStatusChange(u._id, 'approved')} style={{ background: 'none', color: 'var(--secondary)', fontWeight: 'bold' }}>Approve</button>
                             )}
-                          </>
+                            
+                            {/* 👈 নতুন ডিলিট বাটন */}
+                            <button 
+                              onClick={() => handleDeleteUser(u._id)} 
+                              style={{ background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1.2rem' }}
+                              title="Delete User"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
