@@ -51,7 +51,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // 👈 নতুন: ইউজার ডিলিট করার ফাংশন
   const handleDeleteUser = async (userId) => {
     if (!window.confirm(t("Are you sure? This will delete the user and ALL their data permanently.", "আপনি কি নিশ্চিত? এটি ইউজার এবং তার সব ডেটা স্থায়ীভাবে ডিলিট করে দিবে।"))) return;
     
@@ -104,6 +103,9 @@ const AdminDashboard = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // মোট ইউজার হিসাব (অ্যাডমিনের সংখ্যা সহ)
+  const totalUsers = stats ? (stats.totalTeachers + stats.totalStudents + stats.totalGuardians + users.filter(u => u.role === 'admin').length) : 0;
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -113,22 +115,32 @@ const AdminDashboard = () => {
       {/* ১. অ্যাডভান্সড স্ট্যাটস কার্ড */}
       {stats && (
         <div className="admin-stats-grid">
+          {/* 👈 নতুন: Total Users কার্ড */}
+          <div className="admin-card" style={{ borderTop: '4px solid var(--primary)' }}>
+            <h3>{t("Total Users", "মোট ইউজার")}</h3>
+            <h2>{totalUsers}</h2>
+          </div>
+
           <div className="admin-card">
             <h3>{t("Total Teachers", "মোট শিক্ষক")}</h3>
             <h2>{stats.totalTeachers}</h2>
           </div>
+          
           <div className="admin-card">
             <h3>{t("Total Students", "মোট শিক্ষার্থী")}</h3>
             <h2>{stats.totalStudents}</h2>
           </div>
+          
           <div className="admin-card">
             <h3>{t("Total Guardians", "মোট অভিভাবক")}</h3>
             <h2>{stats.totalGuardians}</h2>
           </div>
+          
           <div className="admin-card">
             <h3>{t("Total Exams", "মোট এক্সাম")}</h3>
             <h2>{stats.totalExams}</h2>
           </div>
+          
           <div className="admin-card">
             <h3>{t("Study Materials", "স্টাডি মেটেরিয়াল")}</h3>
             <h2>{stats.totalMaterials}</h2>
@@ -157,7 +169,7 @@ const AdminDashboard = () => {
                 <span style={{ fontWeight: 500 }}>{t("Open Registration", "রেজিস্ট্রেশন চালু")}</span>
               </div>
 
-              {/* ৫. মনিটাইজেশন টগল */}
+              {/* মনিটাইজেশন টগল */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                 <label className="switch">
                   <input 
@@ -170,7 +182,7 @@ const AdminDashboard = () => {
                 </label>
                 <div>
                   <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{t("Enable Teacher Subscription", "টিচার সাবস্ক্রিপশন চালু")}</span>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>টিচারদের অ্যাকাউন্ট অ্যাক্টিভ করতে ৳{settings?.subscriptionFee} দিতে হবে।</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>টিচারদের অ্যাকাউন্ট অ্যাক্টিভ করতে ৳{settings?.subscriptionFee || 200} দিতে হবে।</p>
                 </div>
               </div>
             </div>
@@ -258,7 +270,6 @@ const AdminDashboard = () => {
                               <button onClick={() => handleStatusChange(u._id, 'approved')} style={{ background: 'none', color: 'var(--secondary)', fontWeight: 'bold' }}>Approve</button>
                             )}
                             
-                            {/* 👈 নতুন ডিলিট বাটন */}
                             <button 
                               onClick={() => handleDeleteUser(u._id)} 
                               style={{ background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1.2rem' }}

@@ -113,3 +113,13 @@ input:checked + .slider:before {
     flex-wrap: wrap;
   }
 }
+@media (max-width: 480px) {
+  .admin-stats-grid {
+    grid-template-columns: 1fr !important; /* কার্ডগুলোও এক কলামে নিচে নিচে আসবে */
+  }
+
+  /* সেটিংসের সুইচ এবং টেক্সট পাশাপাশি থাকলে ভেঙে যেতে পারে, তাই ফ্লেক্স র্যাপ */
+  .dashboard-section div[style*="display: flex"] {
+    flex-wrap: wrap;
+  }
+}
