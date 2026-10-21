@@ -52,7 +52,7 @@ const StudentDashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
-  // 👈 আজকের দিন এবং ক্লাস ফিল্টার
+  // আজকের দিন এবং ক্লাস ফিল্টার
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const localDayName = daysOfWeek[new Date().getDay()];
   const todayClasses = data.studentSchedules?.filter(s => s.day === localDayName) || [];
@@ -67,7 +67,6 @@ const StudentDashboard = () => {
           <h1 className="page-title" style={{ fontSize: '2rem', marginTop: '0.2rem' }}>
             {t("Student Dashboard", "স্টুডেন্ট ড্যাশবোর্ড")}
           </h1>
-          {/* 👈 আজকের তারিখ */}
           <p style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '0.2rem' }}>
             {t("Today's Date:", "আজকের তারিখ:")} {todayDate}
           </p>
@@ -111,7 +110,7 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* 👈 নতুন: Today's Classes সেকশন */}
+      {/* Today's Classes সেকশন */}
       <div className="dashboard-section" style={{ marginBottom: '2rem' }}>
         <h2 className="section-title">
           <span style={{ fontSize: '1.4rem' }}>📅</span> {t("Today's Classes", "আজকের ক্লাস")} ({localDayName})
@@ -139,7 +138,8 @@ const StudentDashboard = () => {
         )}
       </div>
 
-      <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      {/* 👈 এখানে inline style মুছে ফেলা হয়েছে, যাতে মোবাইলে রেসপনসিভ হয় */}
+      <div className="dashboard-grid">
         {/* Recent Payments List */}
         <div className="dashboard-section">
           <h2 className="section-title">📅 {t("Recent Payments", "সাম্প্রতিক পেমেন্ট")}</h2>
