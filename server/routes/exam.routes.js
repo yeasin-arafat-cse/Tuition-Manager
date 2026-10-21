@@ -6,12 +6,12 @@ import {
   getStudentExams,
   getTeacherExams,
   updateExam,
-  deleteExam
+  deleteExam,
+  getExamDetailsForTeacher // 👈 নতুন
 } from "../controllers/exam.controller.js";
 import { protect, allowRoles } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
-
 router.use(protect);
 
 // Teacher Routes
@@ -19,6 +19,7 @@ router.post("/create", allowRoles("teacher"), createExam);
 router.get("/teacher/all", allowRoles("teacher"), getTeacherExams);
 router.put("/:id", allowRoles("teacher"), updateExam);
 router.delete("/:id", allowRoles("teacher"), deleteExam);
+router.get("/:id/details", allowRoles("teacher"), getExamDetailsForTeacher); // 👈 নতুন
 
 // Student & Teacher Routes
 router.get("/:id", getExamById);

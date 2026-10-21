@@ -29,7 +29,7 @@ export const createExam = async (req, res) => {
   }
 };
 
-// @desc    Get exam by ID
+// @desc    Get exam by ID (For Student)
 // @route   GET /api/exams/:id
 export const getExamById = async (req, res) => {
   try {
@@ -51,11 +51,31 @@ export const getExamById = async (req, res) => {
   }
 };
 
+// @desc    Get exam details for teacher (with student answers)
+// @route   GET /api/exams/:id/details
+export const getExamDetailsForTeacher = async (req, res) => {
+  try {
+    const exam = await Exam.findById(req.params.id).populate("student", "name class");
+    
+    if (!exam) {
+      return res.status(404).json({ success: false, message: "Exam not found" });
+    }
+
+    if (exam.teacher.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    res.json({ success: true, exam });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Submit Exam
 // @route   POST /api/exams/:id/submit
 export const submitExam = async (req, res) => {
   try {
-    const { answers } = req.body; // Array of { questionId, selectedOption, textAnswer }
+    const { answers } = req.body;
     const exam = await Exam.findById(req.params.id);
 
     if (!exam) {
@@ -73,14 +93,12 @@ export const submitExam = async (req, res) => {
       const studentAns = answers.find((a) => a.questionId === q._id.toString());
       
       if (studentAns) {
-        // উত্তর সেভ করা
         studentAnswers.push({
           questionId: q._id,
           selectedOption: studentAns.selectedOption || null,
           textAnswer: studentAns.textAnswer || null
         });
 
-        // স্কোরিং (শুধু MCQ এর জন্য)
         if (q.options && q.options.length > 0 && studentAns.selectedOption === q.correctAnswer) {
           score++;
         }
@@ -117,11 +135,19 @@ export const getStudentExams = async (req, res) => {
   }
 };
 
-// @desc    Get all exams created by teacher (with results)
+// @desc    Get all exams created by teacher (with filters)
 // @route   GET /api/exams/teacher/all
 export const getTeacherExams = async (req, res) => {
   try {
-    const exams = await Exam.find({ teacher: req.user._id })
+    const { studentId } = req.query;
+    
+    let query = { teacher: req.user._id };
+    
+    if (studentId) {
+      query.student = studentId;
+    }
+
+    const exams = await Exam.find(query)
       .populate("student", "name class")
       .sort({ createdAt: -1 });
 
