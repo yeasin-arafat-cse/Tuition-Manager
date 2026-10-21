@@ -26,6 +26,8 @@ import StudentProfile from './pages/StudentProfile';
 import NoticeBoard from './pages/NoticeBoard';
 import StudyMaterial from './pages/StudyMaterial';
 import StudentMaterials from './pages/StudentMaterials';
+import MyProfile from './pages/MyProfile';
+import StudentNotices from './pages/StudentNotices';
 import { useAuth } from './context/AuthContext';
 import './pages/Loader.css';
 
@@ -101,7 +103,9 @@ function App() {
 
         {/* Student Routes */}
         <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/profile" element={<MyProfile />} />
         <Route path="/student/materials" element={<StudentMaterials />} />
+        <Route path="/student/notices" element={<StudentNotices />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/exams" element={<StudentExamsList />} />
         <Route path="/student/exam/:id" element={<StudentExam />} />

@@ -6,6 +6,7 @@ import './Students.css';
 
 const StudentMaterials = () => {
   const [materials, setMaterials] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useApp();
 
@@ -25,19 +26,32 @@ const StudentMaterials = () => {
 
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
 
+  const filteredMaterials = materials.filter(mat => 
+    mat.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    mat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 className="page-title">{t("Study Materials", "স্টাডি মেটেরিয়াল")}</h1>
+        
+        <input 
+          type="text" 
+          placeholder={t("Search by title or note...", "টাইটেল বা নোট দিয়ে খুঁজুন...")}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+        />
       </div>
 
-      {materials.length === 0 ? (
+      {filteredMaterials.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <h3>{t("No materials shared yet.", "এখনো কোনো মেটেরিয়াল শেয়ার করা হয়নি।")}</h3>
+          <h3>{t("No materials found.", "কোনো মেটেরিয়াল পাওয়া যায়নি।")}</h3>
         </div>
       ) : (
         <div className="dashboard-grid">
-          {materials.map((mat) => (
+          {filteredMaterials.map((mat) => (
             <div key={mat._id} className="dashboard-section" style={{ padding: '1.5rem' }}>
               <h3 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>{mat.title}</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>

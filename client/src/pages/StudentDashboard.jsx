@@ -33,8 +33,6 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     fetchDashboard();
-
-    // প্রতি ১০ সেকেন্ড পর পর তারিখ আপডেট চেক করবে
     const interval = setInterval(() => {
       const currentDate = getLocalDateString();
       if (currentDate !== todayDate) {
@@ -42,7 +40,6 @@ const StudentDashboard = () => {
         fetchDashboard();
       }
     }, 10000);
-
     return () => clearInterval(interval);
   }, [todayDate]);
 
@@ -52,7 +49,6 @@ const StudentDashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
-  // আজকের দিন এবং ক্লাস ফিল্টার
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const localDayName = daysOfWeek[new Date().getDay()];
   const todayClasses = data.studentSchedules?.filter(s => s.day === localDayName) || [];
@@ -73,7 +69,6 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="dashboard-grid">
         <div className="stat-card" onClick={() => navigate('/student/attendance')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon success">✅</div>
@@ -110,7 +105,6 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Today's Classes সেকশন */}
       <div className="dashboard-section" style={{ marginBottom: '2rem' }}>
         <h2 className="section-title">
           <span style={{ fontSize: '1.4rem' }}>📅</span> {t("Today's Classes", "আজকের ক্লাস")} ({localDayName})
@@ -138,9 +132,8 @@ const StudentDashboard = () => {
         )}
       </div>
 
-      {/* 👈 এখানে inline style মুছে ফেলা হয়েছে, যাতে মোবাইলে রেসপনসিভ হয় */}
+      {/* Recent Payments List (My Profile বাদ দেওয়া হয়েছে) */}
       <div className="dashboard-grid">
-        {/* Recent Payments List */}
         <div className="dashboard-section">
           <h2 className="section-title">📅 {t("Recent Payments", "সাম্প্রতিক পেমেন্ট")}</h2>
           {data.recentPayments.length === 0 ? (
@@ -160,16 +153,6 @@ const StudentDashboard = () => {
             </ul>
           )}
         </div>
-
-        {/* Profile Info */}
-        <div className="dashboard-section">
-          <h2 className="section-title">👤 {t("My Profile", "আমার প্রোফাইল")}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-            <div><strong>{t("Name:", "নাম:")}</strong> {data.studentInfo.name}</div>
-            <div><strong>{t("Class:", "ক্লাস:")}</strong> {data.studentInfo.class}</div>
-            <div><strong>{t("Subject:", "বিষয়:")}</strong> {data.studentInfo.subject}</div>
-          </div>
-        </div>
       </div>
 
       {data.notices && data.notices.length > 0 && (
@@ -188,7 +171,6 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

@@ -140,8 +140,8 @@ export const getStudentAttendanceDetails = async (req, res) => {
   }
 };
 
-// @desc    Get logged in student's attendance
-// @route   GET /api/attendance/my-attendance
+// @desc    Get logged in student's attendance (by month)
+// @route   GET /api/attendance/my-attendance?month=YYYY-MM
 export const getMyAttendance = async (req, res) => {
   try {
     const studentProfile = await Student.findOne({ user: req.user._id });
@@ -149,10 +149,29 @@ export const getMyAttendance = async (req, res) => {
       return res.status(404).json({ success: false, message: "Profile not found" });
     }
 
-    const attendance = await Attendance.find({ student: studentProfile._id })
-      .sort({ date: -1 });
+    const { month } = req.query;
+    let startDate, endDate;
 
-    const totalOffDays = await Attendance.countDocuments({ student: studentProfile._id, status: "off_day" });
+    if (month) {
+      const [year, monthNum] = month.split('-');
+      startDate = new Date(year, monthNum - 1, 1);
+      endDate = new Date(year, monthNum, 0); 
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+
+    const attendance = await Attendance.find({
+      student: studentProfile._id,
+      date: { $gte: startDate, $lte: endDate }
+    }).sort({ date: -1 });
+
+    const totalOffDays = await Attendance.countDocuments({ 
+      student: studentProfile._id, 
+      status: "off_day",
+      date: { $gte: startDate, $lte: endDate }
+    });
 
     res.json({ success: true, attendance, totalOffDays });
   } catch (error) {

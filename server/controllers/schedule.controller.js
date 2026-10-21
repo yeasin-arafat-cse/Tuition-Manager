@@ -1,9 +1,9 @@
 import Schedule from "../models/Schedule.js";
-import Student from "../models/Student.js"; // 👈 নতুন ইমপোর্ট
+import Student from "../models/Student.js";
 
 // @desc    Add/Update Weekly Schedule
 // @route   POST /api/schedules
-export const addSchedule = async (req, res) => {
+export const addSchedule = async (req, res) => { // 👈 এই ফাংশনটি নিশ্চিত করুন
   try {
     const { studentId, routine } = req.body; 
 
@@ -11,13 +11,16 @@ export const addSchedule = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid data format" });
     }
 
+    // ১. চেক করা এই স্টুডেন্টের আগে থেকেই রুটিন আছে কিনা
     const existingSchedules = await Schedule.find({ teacher: req.user._id, student: studentId });
 
+    // ২. নতুন ডেটাগুলোর জন্য একটি ম্যাপ তৈরি করা
     const routineMap = {};
     routine.forEach(item => {
       routineMap[item.day] = item;
     });
 
+    // ৩. পুরাতন ডেটাগুলো আপডেট বা ডিলিট করা
     for (const existing of existingSchedules) {
       if (routineMap[existing.day]) {
         existing.subject = routineMap[existing.day].subject;
@@ -30,6 +33,7 @@ export const addSchedule = async (req, res) => {
       }
     }
 
+    // ৪. বাকি নতুন দিনগুলোর জন্য নতুন রুটিন তৈরি করা
     const newSchedules = Object.values(routineMap).map(item => ({
       teacher: req.user._id,
       student: studentId,
@@ -70,7 +74,7 @@ export const getSchedules = async (req, res) => {
 
 // @desc    Get logged in student's schedule
 // @route   GET /api/schedules/student/my-routine
-export const getStudentSchedule = async (req, res) => { // 👈 নতুন ফাংশন
+export const getStudentSchedule = async (req, res) => {
   try {
     const studentProfile = await Student.findOne({ user: req.user._id });
     if (!studentProfile) {

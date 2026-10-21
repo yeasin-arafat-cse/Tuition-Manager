@@ -1,4 +1,5 @@
 import Notice from "../models/Notice.js";
+import Student from "../models/Student.js";
 
 // @desc    Create a new notice
 // @route   POST /api/notices
@@ -41,6 +42,29 @@ export const deleteNotice = async (req, res) => {
     }
     await notice.deleteOne();
     res.json({ success: true, message: "Notice deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get all notices for logged in student
+// @route   GET /api/notices/student
+export const getStudentNotices = async (req, res) => {
+  try {
+    const studentProfile = await Student.findOne({ user: req.user._id });
+    if (!studentProfile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    const notices = await Notice.find({ 
+      teacher: studentProfile.teacher,
+      $or: [
+        { student: null }, 
+        { student: studentProfile._id } 
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, notices });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

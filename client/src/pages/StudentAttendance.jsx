@@ -8,12 +8,17 @@ const StudentAttendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [totalOffDays, setTotalOffDays] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; 
+  });
   const { t } = useApp();
 
   useEffect(() => {
     const fetchAttendance = async () => {
+      setIsLoading(true);
       try {
-        const res = await api.get('/attendance/my-attendance');
+        const res = await api.get(`/attendance/my-attendance?month=${selectedMonth}`);
         setAttendance(res.data.attendance);
         setTotalOffDays(res.data.totalOffDays || 0); 
       } catch (error) {
@@ -23,15 +28,28 @@ const StudentAttendance = () => {
       }
     };
     fetchAttendance();
-  }, []);
+  }, [selectedMonth]);
 
   if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 className="page-title">{t("My Attendance", "আমার উপস্থিতি")}</h1>
         
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontWeight: '600' }}>{t("Select Month:", "মাস সিলেক্ট করুন:")}</label>
+          <input 
+            type="month" 
+            className="date-input" 
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(e.target.value)} 
+            style={{ padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.5rem 1rem', borderRadius: '8px', color: 'var(--warning)', fontWeight: 'bold' }}>
           {t("Total Off Days:", "মোট ছুটি:")} {totalOffDays}
         </div>
@@ -60,9 +78,8 @@ const StudentAttendance = () => {
                     <span 
                       className={`badge ${
                         att.status === 'present' ? 'paid' : 
-                        att.status === 'absent' ? 'due' : ''
+                        att.status === 'absent' ? 'due' : 'off-day'
                       }`}
-                      style={att.status === 'off_day' ? { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', padding: '0.3rem 0.8rem', borderRadius: '20px', fontWeight: '600' } : {}}
                     >
                       {att.status === 'present' ? t("Present", "উপস্থিত") : 
                        att.status === 'absent' ? t("Absent", "অনুপস্থিত") : 

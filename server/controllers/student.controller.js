@@ -109,7 +109,7 @@ export const deleteStudent = async (req, res) => {
   }
 };
 
-// @desc    Get student full profile (payments, attendance)
+// @desc    Get student full profile (For Teacher)
 // @route   GET /api/students/:id/profile
 export const getStudentProfile = async (req, res) => {
   try {
@@ -120,7 +120,6 @@ export const getStudentProfile = async (req, res) => {
 
     const payments = await Payment.find({ student: student._id }).sort({ year: -1, month: -1 });
     
-    // বর্তমান মাসের হাজিরার হিসাব
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -132,7 +131,7 @@ export const getStudentProfile = async (req, res) => {
 
     const present = currentMonthAttendance.filter(a => a.status === 'present').length;
     const absent = currentMonthAttendance.filter(a => a.status === 'absent').length;
-    const offDay = currentMonthAttendance.filter(a => a.status === 'off_day').length; // 👈 Off Day
+    const offDay = currentMonthAttendance.filter(a => a.status === 'off_day').length;
 
     res.json({
       success: true,
@@ -141,10 +140,36 @@ export const getStudentProfile = async (req, res) => {
       attendance: { 
         present, 
         absent,
-        offDay, // 👈 Off Day পাঠানো হলো
+        offDay,
         monthName: now.toLocaleString('default', { month: 'long' }), 
         year: now.getFullYear()
       }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get logged in student's full profile
+// @route   GET /api/students/my-profile
+export const getMyProfile = async (req, res) => { // 👈 এই ফাংশনটি নিশ্চিত করুন এখানে আছে
+  try {
+    const student = await Student.findOne({ user: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    const payments = await Payment.find({ student: student._id, status: "paid" });
+    const totalPaid = payments.reduce((acc, curr) => acc + curr.amount, 0);
+
+    const totalPresent = await Attendance.countDocuments({ student: student._id, status: "present" });
+    const totalAbsent = await Attendance.countDocuments({ student: student._id, status: "absent" });
+
+    res.json({
+      success: true,
+      student,
+      totalPaid,
+      attendance: { present: totalPresent, absent: totalAbsent }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

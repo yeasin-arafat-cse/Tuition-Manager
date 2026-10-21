@@ -35,7 +35,9 @@ const Layout = () => {
     if (user?.role === 'student') {
       return [
         { name: t("Dashboard", "ড্যাশবোর্ড"), path: '/student/dashboard', icon: '📊' },
-        { name: t("Study Materials", "স্টাডি মেটেরিয়াল"), path: '/student/materials', icon: '📚' }, // 👈 নতুন মেনু
+        { name: t("My Profile", "আমার প্রোফাইল"), path: '/student/profile', icon: '👤' },
+        { name: t("Study Materials", "স্টাডি মেটেরিয়াল"), path: '/student/materials', icon: '📚' },
+        { name: t("Notice Board", "নোটিশ বোর্ড"), path: '/student/notices', icon: '📢' },
         { name: t("My Routine", "আমার রুটিন"), path: '/student/schedule', icon: '📅' },
         { name: t("My Exams", "আমার এক্সাম"), path: '/student/exams', icon: '📝' },
         { name: t("Attendance", "উপস্থিতি"), path: '/student/attendance', icon: '✅' },
