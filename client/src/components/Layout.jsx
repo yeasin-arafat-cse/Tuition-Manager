@@ -67,7 +67,7 @@ const Layout = () => {
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img 
-            src="/pwa-192x192.png" 
+            src="/logo.png" 
             alt="TM Logo" 
             style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} 
           /> 
