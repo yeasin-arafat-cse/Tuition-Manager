@@ -189,25 +189,27 @@ const StudentExam = () => {
   return (
     <div className="exam-container animate-fade-in">
       
-      {/* 👈 Sticky Exam Header */}
+       {/* 👈 Sticky Exam Header */}
       <div className="exam-header-sticky">
         <div>
-          <h1 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>{exam.title}</h1>
-          <p style={{ color: 'var(--text-muted)' }}>
-            {t("Total Questions:", "মোট প্রশ্ন:")} {exam.questions.length}
-          </p>
+          {/* টাইটেল ছোট করা হলো */}
+          <h1 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)' }}>{exam.title}</h1>
         </div>
         
+        {/* টাইমারের বক্সটি ছোট ও কমপ্যাক্ট করা হলো */}
         <div style={{ 
           background: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-main)', 
           color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-main)',
-          padding: '0.8rem 1.5rem', 
-          borderRadius: '8px', 
+          padding: '0.4rem 1rem', 
+          borderRadius: '20px', // পিল শেপ
           textAlign: 'center',
-          border: `1px solid ${timeLeft < 60 ? 'var(--danger)' : 'var(--border)'}`
+          border: `1px solid ${timeLeft < 60 ? 'var(--danger)' : 'var(--border)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
         }}>
-          <p style={{ fontSize: '0.8rem', color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-muted)', margin: 0 }}>⏱️ {t("Time Left", "বাকি সময়")}</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{formatTime(timeLeft)}</h3>
+          <span style={{ fontSize: '0.9rem' }}>⏱️</span>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>{formatTime(timeLeft)}</h3>
         </div>
       </div>
 
