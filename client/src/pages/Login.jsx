@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, logout } = useAuth(); // 👈 logout ফাংশন নিয়ে এলাম
   const { t, toggleTheme, toggleLanguage, theme } = useApp();
   const navigate = useNavigate();
 
@@ -19,6 +19,16 @@ const Login = () => {
     setIsLoading(true);
     try {
       const data = await login(email, password);
+      
+      // 👈 নতুন: মনিটাইজেশন (Pending Status) চেক
+      if (data.status === 'pending') {
+        toast.error(t("Your account is pending. Please contact Admin to pay the subscription fee.", "আপনার অ্যাকাউন্ট পেন্ডিং আছে। সাবস্ক্রিপশন ফি পরিশোধ করতে অ্যাডমিনের সাথে যোগাযোগ করুন।"), {
+          duration: 5000,
+        });
+        logout(); // লগইন স্টেট ক্লিয়ার করে দিলাম
+        return;
+      }
+
       toast.success(t("Welcome back!", "স্বাগতম!"));
       
       // রোল অনুযায়ী রিডাইরেক্ট করা
@@ -36,10 +46,12 @@ const Login = () => {
 
   return (
     <div className="auth-container">
+      {/* ব্যাকগ্রাউন্ড অ্যানিমেশন ব্লব */}
       <div className="auth-blob blob-1"></div>
       <div className="auth-blob blob-2"></div>
-      {/* থিম ও ল্যাঙ্গুয়েজ বাটন (উপরে ডানদিকে রাখতে পারেন, আপাতত নিচে দিলাম) */}
-      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '10px' }}>
+
+      {/* থিম ও ল্যাঙ্গুয়েজ বাটন */}
+      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 10 }}>
         <button onClick={toggleTheme} style={{ padding: '5px 10px', borderRadius: '5px', background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border)' }}>
           {theme === 'light' ? '🌙' : '☀️'}
         </button>

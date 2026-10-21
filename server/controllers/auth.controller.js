@@ -16,6 +16,7 @@ export const register = async (req, res) => {
     const { name, email, password, role, phone } = req.body;
 
     let settings = await AdminSettings.findOne();
+    
     if (settings && !settings.registrationOpen && role !== 'admin') {
       return res.status(403).json({ success: false, message: "Registration is currently closed by the Admin." });
     }
@@ -36,12 +37,19 @@ export const register = async (req, res) => {
       }
     }
 
+    // 👈 মনিটাইজেশন চেক
+    let userStatus = "approved";
+    if (settings && settings.isMonetizationEnabled && role === "teacher") {
+      userStatus = "pending"; 
+    }
+
     const user = await User.create({
       name,
       email,
       password,
       role: role || "student",
       phone,
+      status: userStatus 
     });
 
     if (role === "student" && studentProfile) {
@@ -57,6 +65,7 @@ export const register = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        status: user.status,
         token: generateToken(user._id),
       });
     } else {
@@ -79,6 +88,8 @@ export const login = async (req, res) => {
         return res.status(403).json({ success: false, message: "Your account is blocked." });
       }
 
+      // পেন্ডিং টিচার লগইন করলে তাকে পেমেন্ট পেজে পাঠানোর জন্য ফ্রন্টএন্ডে মেসেজ পাঠানো হবে
+      
       user.lastLogin = Date.now();
       await user.save({ validateBeforeSave: false });
 
@@ -89,6 +100,7 @@ export const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        status: user.status, // 👈 স্ট্যাটাস পাঠানো হলো
         token: generateToken(user._id),
       });
     } else {
@@ -147,7 +159,6 @@ export const updatePassword = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-      // পুরনো পাসওয়ার্ড চেক করা
       if (await user.matchPassword(req.body.oldPassword)) {
         user.password = req.body.newPassword;
         await user.save();

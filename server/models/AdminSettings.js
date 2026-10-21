@@ -22,6 +22,14 @@ const adminSettingsSchema = new mongoose.Schema(
       type: Number,
       default: 50,
     },
+    isMonetizationEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    subscriptionFee: {
+      type: Number,
+      default: 200, 
+    },
   },
   { timestamps: true }
 );

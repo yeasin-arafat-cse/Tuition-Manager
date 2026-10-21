@@ -3,20 +3,22 @@ import {
   getAllUsers, 
   updateUserStatus, 
   getSettings, 
-  updateSettings 
+  updateSettings,
+  getAdminStats,
+  sendGlobalNotice
 } from "../controllers/admin.controller.js";
 import { protect, allowRoles } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// সব রাউটে লগইন এবং Admin রোল বাধ্যতামূলক
 router.use(protect);
 router.use(allowRoles("admin"));
 
+router.get("/stats", getAdminStats);
 router.get("/users", getAllUsers);
 router.put("/users/:id/status", updateUserStatus);
-
 router.get("/settings", getSettings);
 router.put("/settings", updateSettings);
+router.post("/global-notice", sendGlobalNotice);
 
 export default router;

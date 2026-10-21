@@ -1,5 +1,33 @@
 import User from "../models/User.js";
 import AdminSettings from "../models/AdminSettings.js";
+import Exam from "../models/Exam.js";
+import Material from "../models/Material.js";
+import Notice from "../models/Notice.js";
+
+// @desc    Get Admin Dashboard Stats
+// @route   GET /api/admin/stats
+export const getAdminStats = async (req, res) => {
+  try {
+    const totalTeachers = await User.countDocuments({ role: "teacher" });
+    const totalStudents = await User.countDocuments({ role: "student" });
+    const totalGuardians = await User.countDocuments({ role: "guardian" });
+    const totalExams = await Exam.countDocuments();
+    const totalMaterials = await Material.countDocuments();
+
+    res.json({
+      success: true,
+      data: {
+        totalTeachers,
+        totalStudents,
+        totalGuardians,
+        totalExams,
+        totalMaterials
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // @desc    Get all users
 // @route   GET /api/admin/users
@@ -16,7 +44,7 @@ export const getAllUsers = async (req, res) => {
 // @route   PUT /api/admin/users/:id/status
 export const updateUserStatus = async (req, res) => {
   try {
-    const { status } = req.body; // "approved" or "blocked" or "pending"
+    const { status } = req.body; 
     
     if (!["approved", "blocked", "pending"].includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
@@ -43,19 +71,16 @@ export const updateUserStatus = async (req, res) => {
 export const getSettings = async (req, res) => {
   try {
     let settings = await AdminSettings.findOne();
-    
-    // যদি ডেটাবেসে সেটিংস না থাকে, তবে ডিফল্ট সেটিংস তৈরি করে নিবে
     if (!settings) {
       settings = await AdminSettings.create({});
     }
-    
     res.json({ success: true, settings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Update Admin Settings (Registration On/Off)
+// @desc    Update Admin Settings
 // @route   PUT /api/admin/settings
 export const updateSettings = async (req, res) => {
   try {
@@ -68,6 +93,25 @@ export const updateSettings = async (req, res) => {
     }
     
     res.json({ success: true, message: "Settings updated", settings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Send Global Notice
+// @route   POST /api/admin/global-notice
+export const sendGlobalNotice = async (req, res) => {
+  try {
+    const { title, message } = req.body; 
+
+    const notice = await Notice.create({
+      teacher: null, 
+      student: null,
+      title,
+      message,
+    });
+
+    res.status(201).json({ success: true, message: "Global notice sent successfully", notice });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
