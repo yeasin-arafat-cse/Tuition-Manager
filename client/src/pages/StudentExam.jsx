@@ -187,12 +187,12 @@ const StudentExam = () => {
 
   // এক্সাম দেওয়ার স্ক্রিন
   return (
-    <div className="exam-container animate-fade-in">
+    <div className="animate-fade-in">
       
       {/* 👈 শুধু টাইমার থাকবে স্টিকি হেডারে */}
-      <div className="exam-header-sticky" style={{ justifyContent: 'flex-end' }}>
+      <div className="exam-header-sticky">
         <div style={{ 
-          background: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-main)', 
+          background: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-card)', 
           color: timeLeft < 60 ? 'var(--danger)' : 'var(--text-main)',
           padding: '0.4rem 1.2rem', 
           borderRadius: '20px',
@@ -200,85 +200,88 @@ const StudentExam = () => {
           border: `1px solid ${timeLeft < 60 ? 'var(--danger)' : 'var(--border)'}`,
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
         }}>
           <span style={{ fontSize: '1rem' }}>⏱️</span>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: 0 }}>{formatTime(timeLeft)}</h3>
         </div>
       </div>
 
-      {/* 👈 এক্সামের টাইটেল ও প্রশ্ন সংখ্যা নিচে নরমালভাবে */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{exam.title}</h1>
-        <p style={{ color: 'var(--text-muted)' }}>
-          {t("Total Questions:", "মোট প্রশ্ন:")} {exam.questions.length}
-        </p>
-      </div>
+      {/* 👈 এক্সামের মূল কন্টেইনার */}
+      <div className="exam-container">
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{exam.title}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>
+            {t("Total Questions:", "মোট প্রশ্ন:")} {exam.questions.length}
+          </p>
+        </div>
 
-      {exam.questions.map((q, index) => {
-        const qId = q._id.toString();
-        const isMcq = q.options && q.options.length > 0;
+        {exam.questions.map((q, index) => {
+          const qId = q._id.toString();
+          const isMcq = q.options && q.options.length > 0;
 
-        return (
-          <div key={q._id} className="question-box">
-            <div className="question-text">
-              <span style={{ color: 'var(--primary)', marginRight: '0.5rem' }}>Q{index + 1}.</span> 
-              {isMcq ? q.question : (q.stem ? `উদ্দীপক: ${q.stem}` : q.question)}
+          return (
+            <div key={q._id} className="question-box">
+              <div className="question-text">
+                <span style={{ color: 'var(--primary)', marginRight: '0.5rem' }}>Q{index + 1}.</span> 
+                {isMcq ? q.question : (q.stem ? `উদ্দীপক: ${q.stem}` : q.question)}
+              </div>
+              
+              {isMcq && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {q.options.map((opt, i) => {
+                    const isSelected = answers[qId] === opt;
+                    return (
+                      <label key={i} className={`option-label ${isSelected ? 'selected' : ''}`} style={{
+                        borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                        backgroundColor: isSelected ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
+                      }}>
+                        <input type="radio" name={`q-${qId}`} value={opt} checked={isSelected} onChange={() => handleOptionChange(qId, opt)} />
+                        <span style={{ fontWeight: isSelected ? '600' : '400' }}>{opt}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!isMcq && !q.stem && (
+                <textarea
+                  placeholder={t("Write your answer here...", "এখানে আপনার উত্তর লিখুন...")}
+                  value={textAnswers[qId] || ''}
+                  onChange={(e) => handleTextChange(qId, e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', marginTop: '10px', background: 'var(--bg-main)', color: 'var(--text-main)', minHeight: '80px' }}
+                />
+              )}
+
+              {q.stem && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                  <div>
+                    <p style={{ fontWeight: 'bold' }}>{q.questionA}</p>
+                    <textarea placeholder={t("Answer A...", "ক এর উত্তর...")} value={textAnswers[`${qId}_A`] || ''} onChange={(e) => handleTextChange(`${qId}_A`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 'bold' }}>{q.questionB}</p>
+                    <textarea placeholder={t("Answer B...", "খ এর উত্তর...")} value={textAnswers[`${qId}_B`] || ''} onChange={(e) => handleTextChange(`${qId}_B`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 'bold' }}>{q.questionC}</p>
+                    <textarea placeholder={t("Answer C...", "গ এর উত্তর...")} value={textAnswers[`${qId}_C`] || ''} onChange={(e) => handleTextChange(`${qId}_C`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 'bold' }}>{q.questionD}</p>
+                    <textarea placeholder={t("Answer D...", "ঘ এর উত্তর...")} value={textAnswers[`${qId}_D`] || ''} onChange={(e) => handleTextChange(`${qId}_D`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {isMcq && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {q.options.map((opt, i) => {
-                  const isSelected = answers[qId] === opt;
-                  return (
-                    <label key={i} className={`option-label ${isSelected ? 'selected' : ''}`} style={{
-                      borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
-                      backgroundColor: isSelected ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
-                    }}>
-                      <input type="radio" name={`q-${qId}`} value={opt} checked={isSelected} onChange={() => handleOptionChange(qId, opt)} />
-                      <span style={{ fontWeight: isSelected ? '600' : '400' }}>{opt}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
+          );
+        })}
 
-            {!isMcq && !q.stem && (
-              <textarea
-                placeholder={t("Write your answer here...", "এখানে আপনার উত্তর লিখুন...")}
-                value={textAnswers[qId] || ''}
-                onChange={(e) => handleTextChange(qId, e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', marginTop: '10px', background: 'var(--bg-main)', color: 'var(--text-main)', minHeight: '80px' }}
-              />
-            )}
-
-            {q.stem && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                <div>
-                  <p style={{ fontWeight: 'bold' }}>{q.questionA}</p>
-                  <textarea placeholder={t("Answer A...", "ক এর উত্তর...")} value={textAnswers[`${qId}_A`] || ''} onChange={(e) => handleTextChange(`${qId}_A`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 'bold' }}>{q.questionB}</p>
-                  <textarea placeholder={t("Answer B...", "খ এর উত্তর...")} value={textAnswers[`${qId}_B`] || ''} onChange={(e) => handleTextChange(`${qId}_B`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 'bold' }}>{q.questionC}</p>
-                  <textarea placeholder={t("Answer C...", "গ এর উত্তর...")} value={textAnswers[`${qId}_C`] || ''} onChange={(e) => handleTextChange(`${qId}_C`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 'bold' }}>{q.questionD}</p>
-                  <textarea placeholder={t("Answer D...", "ঘ এর উত্তর...")} value={textAnswers[`${qId}_D`] || ''} onChange={(e) => handleTextChange(`${qId}_D`, e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      <button onClick={() => handleSubmit(false)} className="auth-btn" disabled={isSubmitting} style={{ width: '100%', marginTop: '1rem', padding: '1.2rem', fontSize: '1.1rem' }}>
-        {isSubmitting ? t("Submitting...", "সাবমিট হচ্ছে...") : t("Submit Exam", "এক্সাম সাবমিট করুন")}
-      </button>
+        <button onClick={() => handleSubmit(false)} className="auth-btn" disabled={isSubmitting} style={{ width: '100%', marginTop: '1rem', padding: '1.2rem', fontSize: '1.1rem' }}>
+          {isSubmitting ? t("Submitting...", "সাবমিট হচ্ছে...") : t("Submit Exam", "এক্সাম সাবমিট করুন")}
+        </button>
+      </div>
     </div>
   );
 };
