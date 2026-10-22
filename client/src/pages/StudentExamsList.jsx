@@ -59,7 +59,7 @@ const StudentExamsList = () => {
                     {t("Start Exam", "এক্সাম শুরু করুন")}
                   </button>
                 ) : (
-                  <button className="add-btn" style={{ backgroundColor: 'var(--secondary)' }} onClick={() => navigate(`/student/exam/${exam._id}`)}>
+                  <button className="add-btn" style={{ backgroundColor: 'var(--secondary)' }} onClick={() => navigate(`/student/exam/${exam._id}?view=true`)}>
                     {t("View Result", "রেজাল্ট দেখুন")} ({exam.score}/{exam.total})
                   </button>
                 )}
