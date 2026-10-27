@@ -1,7 +1,8 @@
 import QuestionBank from "../models/QuestionBank.js";
 import { generateMCQFromText, generateMCQFromImage } from "../services/gemini.service.js";
-import { PdfReader } from "pdfreader";
+import { PdfReader } from "pdfreader"; // 👈 pdfreader ব্যবহার করা হলো
 
+// PDF থেকে টেক্সট বের করার ফাংশন
 const extractTextFromPdf = (buffer) => {
   return new Promise((resolve, reject) => {
     let text = "";
@@ -22,25 +23,42 @@ const extractTextFromPdf = (buffer) => {
 export const generateMCQ = async (req, res) => {
   try {
     const { text, numQuestions, difficulty, subject, sourceType, questionType } = req.body;
+    
+    // 👈 টার্মিনালে চেক করার জন্য (যদি এরর আসে)
+    console.log("File received:", req.file ? req.file.mimetype : "No file");
+    console.log("Text received:", text ? "Yes" : "No");
+
     let source = sourceType || "text";
     let questions = [];
     let extractedText = text;
 
+    // ১. যদি PDF ফাইল আপলোড করা হয়
     if (req.file && req.file.mimetype === "application/pdf") {
       extractedText = await extractTextFromPdf(req.file.buffer);
       source = "pdf";
+      
+      if (!extractedText || extractedText.trim() === "") {
+        return res.status(400).json({ success: false, message: "Could not extract text from this PDF. It might be an image-based PDF." });
+      }
     } 
-    
-    if (req.file && req.file.mimetype.startsWith("image/")) {
+    // ২. যদি Image ফাইল আপলোড করা হয়
+    else if (req.file && req.file.mimetype.startsWith("image/")) {
       source = "image";
       const base64Image = req.file.buffer.toString("base64");
       questions = await generateMCQFromImage(base64Image, req.file.mimetype, numQuestions || 10, difficulty || "medium", questionType || "mcq");
     } 
+    // ৩. যদি টেক্সট দেওয়া হয়
     else if (extractedText) {
+      source = "text";
       questions = await generateMCQFromText(extractedText, numQuestions || 10, difficulty || "medium", questionType || "mcq");
     } 
     else {
-      return res.status(400).json({ success: false, message: "No text or file provided" });
+      return res.status(400).json({ success: false, message: "No text or file provided. Please check the file type." });
+    }
+
+    // যদি PDF বা Text থেকে প্রশ্ন তৈরি করা লাগে (Image এর ক্ষেত্রে আগেই করা হয়ে গেছে)
+    if (source === "pdf" || source === "text") {
+       questions = await generateMCQFromText(extractedText, numQuestions || 10, difficulty || "medium", questionType || "mcq");
     }
 
     res.status(200).json({
