@@ -7,7 +7,7 @@ import './AIMCQ.css';
 const AIMCQ = () => {
   const [inputType, setInputType] = useState('text');
   const [text, setText] = useState('');
-  const [file, setFile] = useState(null); 
+  const [files, setFiles] = useState([]); // 👈 একাধিক ফাইলের জন্য অ্যারে
   
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
@@ -21,13 +21,11 @@ const AIMCQ = () => {
   const { t } = useApp();
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        return toast.error("File is too large. Max 5MB allowed.");
-      }
-      setFile(selectedFile);
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length > 5) {
+      return toast.error("You can upload a maximum of 5 files.");
     }
+    setFiles(selectedFiles);
   };
 
   const handleGenerate = async (e) => {
@@ -36,7 +34,7 @@ const AIMCQ = () => {
     if (inputType === 'text' && !text.trim()) {
       return toast.error(t("Please enter some text", "অনুগ্রহ করে কিছু টেক্সট দিন"));
     }
-    if ((inputType === 'pdf' || inputType === 'image') && !file) {
+    if ((inputType === 'pdf' || inputType === 'image') && files.length === 0) {
       return toast.error(t("Please upload a file", "অনুগ্রহ করে একটি ফাইল আপলোড করুন"));
     }
 
@@ -48,7 +46,9 @@ const AIMCQ = () => {
       if (inputType === 'text') {
         formData.append('text', text);
       } else {
-        formData.append('file', file);
+        files.forEach(f => {
+          formData.append('files', f); // 👈 একাধিক ফাইল অ্যাপেন্ড
+        });
       }
       formData.append('numQuestions', numQuestions);
       formData.append('difficulty', difficulty);
@@ -84,7 +84,7 @@ const AIMCQ = () => {
       
       setGeneratedQuestions([]);
       setText('');
-      setFile(null);
+      setFiles([]);
       
     } catch (error) {
       toast.error('Failed to save');
@@ -131,10 +131,12 @@ const AIMCQ = () => {
                   onChange={handleFileChange}
                   style={{ display: 'none' }}
                   id="file-upload"
+                  multiple // 👈 একাধিক ফাইল সিলেক্ট
                 />
                 <label htmlFor="file-upload" style={{ cursor: 'pointer', color: 'var(--primary)', fontWeight: '600' }}>
-                  {file ? `Selected: ${file.name}` : `Click to Upload ${inputType.toUpperCase()}`}
+                  {files.length > 0 ? `Selected: ${files.length} files` : `Click to Upload ${inputType.toUpperCase()}`}
                 </label>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Max 5 files, 5MB each</p>
               </div>
             )}
 

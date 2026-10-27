@@ -11,8 +11,8 @@ const router = express.Router();
 router.use(protect);
 router.use(allowRoles("teacher"));
 
-// 👈 এখানে "file" নামটি ফ্রন্টএন্ডের FormData এর সাথে মিলতে হবে
-router.post("/generate", upload.single("file"), generateMCQ); 
+// 👈 upload.array("files", 5) দিলাম, যাতে একসাথে সর্বোচ্চ ৫টি ফাইল পাঠানো যায়
+router.post("/generate", upload.array("files", 5), generateMCQ); 
 router.post("/save", saveMCQ);
 router.get("/question-bank", getQuestionBanks);
 router.delete("/question-bank/:id", deleteQuestionBank);
