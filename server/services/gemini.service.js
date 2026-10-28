@@ -1,13 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ১. টেক্সট বা PDF থেকে প্রশ্ন তৈরি (MCQ, Short, Creative)
+// ১. টেক্সট বা PDF থেকে প্রশ্ন তৈরি
 export const generateMCQFromText = async (text, numQuestions = 10, difficulty = "medium", questionType = "mcq") => {
   try {
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is missing in .env file");
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash",
+      model: "gemini-3.1-flash-lite", // 👈 মডেল পরিবর্তন করা হলো (503 এরর কম আসবে)
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -88,12 +88,12 @@ export const generateMCQFromText = async (text, numQuestions = 10, difficulty = 
   }
 };
 
-// ২. ইমেজ থেকে প্রশ্ন তৈরি (একাধিক ইমেজ সাপোর্ট সহ)
+// ২. ইমেজ থেকে প্রশ্ন তৈরি (একাধিক ইমেজ সাপোর্ট)
 export const generateMCQFromImage = async (base64ImagesArray, mimeType, numQuestions = 10, difficulty = "medium", questionType = "mcq") => {
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash",
+      model: "gemini-3.1-flash-lite", // 👈 এখানেও পরিবর্তন করা হলো
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -153,12 +153,10 @@ export const generateMCQFromImage = async (base64ImagesArray, mimeType, numQuest
       `;
     }
 
-    // একাধিক ছবিকে Gemini API-র জন্য ফরম্যাট করা
     const imageParts = base64ImagesArray.map(base64 => ({
       inlineData: { data: base64, mimeType: mimeType }
     }));
 
-    // প্রম্পট এবং সবগুলো ছবি একসাথে পাঠানো
     const result = await model.generateContent([prompt, ...imageParts]);
     const responseText = result.response.text();
     const cleanedText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
