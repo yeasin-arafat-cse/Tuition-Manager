@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ১. টেক্সট বা PDF থেকে প্রশ্ন তৈরি
+// ১. টেক্সট  PDF থেকে প্রশ্ন তৈরি
 export const generateMCQFromText = async (text, numQuestions = 10, difficulty = "medium", questionType = "mcq") => {
   try {
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is missing in .env file");
