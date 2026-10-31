@@ -10,7 +10,7 @@ import Notice from "../models/Notice.js";
 export const getTeacherDashboard = async (req, res) => {
   try {
     const teacherId = req.user._id;
-    const range = req.query.range || '6months';
+    const range = req.query.range || 'monthly';
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
@@ -60,51 +60,27 @@ export const getTeacherDashboard = async (req, res) => {
 
     const totalExams = await Exam.countDocuments({ teacher: teacherId });
 
-    // 👈 আয়ের চার্ট ডেটা (Daily, Monthly, Yearly) — ডাবল লাইন ফিক্স সহ
+    // 👈 চার্ট ডেটা (সব ১২টি মাস দেখাবে)
     let incomeChartData = [];
     const allPaidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
+    const currentYear = new Date().getFullYear();
 
-    if (range === 'daily') {
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateString = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
-        
-        const dailyIncome = allPaidPayments
-          .filter(p => p.paidDate && new Date(p.paidDate).toDateString() === d.toDateString())
-          .reduce((acc, curr) => acc + curr.amount, 0);
-          
-        incomeChartData.push({ name: dateString, income: dailyIncome });
-      }
-    } else if (range === 'yearly') {
-      const currentYear = new Date().getFullYear();
-      for (let i = 4; i >= 0; i--) {
-        const year = currentYear - i;
-        const yearlyIncome = allPaidPayments
-          .filter(p => p.paidDate && new Date(p.paidDate).getFullYear() === year)
-          .reduce((acc, curr) => acc + curr.amount, 0);
-        incomeChartData.push({ name: year.toString(), income: yearlyIncome });
-      }
-    } else {
-      // ডিফল্ট: গত ৬ মাসের আয় (monthly)
-      const monthsToFetch = 6;
-      for (let i = monthsToFetch - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const mName = monthNames[d.getMonth()].slice(0, 3);
-        const y = d.getFullYear();
-        
-        // 👈 এখানে ফিক্স করা হলো: নির্দিষ্ট মাসের সব পেমেন্ট যোগ হবে
-        const monthlyIncome = allPaidPayments
-          .filter(p => {
-            if (!p.paidDate) return false;
-            const pDate = new Date(p.paidDate);
-            return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === y;
-          })
-          .reduce((acc, curr) => acc + curr.amount, 0);
+    // জানুয়ারি থেকে ডিসেম্বর পর্যন্ত লুপ চালানো
+    for (let i = 0; i < 12; i++) {
+      const mName = monthNames[i]; 
+      
+      const monthlyIncome = allPaidPayments
+        .filter(p => {
+          if (!p.paidDate) return false;
+          const pDate = new Date(p.paidDate);
+          return pDate.getMonth() === i && pDate.getFullYear() === currentYear;
+        })
+        .reduce((acc, curr) => acc + curr.amount, 0);
 
-        incomeChartData.push({ name: `${mName} ${y.toString().slice(-2)}`, income: monthlyIncome });
-      }
+      incomeChartData.push({ 
+        name: `${mName.slice(0, 3)}`, 
+        income: monthlyIncome 
+      });
     }
 
     // আজকের আয় ও এই মাসের আয়
@@ -112,11 +88,10 @@ export const getTeacherDashboard = async (req, res) => {
     const todayIncome = allPaidPayments.filter(p => p.paidDate && new Date(p.paidDate).toDateString() === todayStr).reduce((a, b) => a + b.amount, 0);
     
     const thisMonth = new Date().getMonth();
-    const thisYear = new Date().getFullYear();
     const thisMonthIncome = allPaidPayments.filter(p => {
       if (!p.paidDate) return false;
       const pDate = new Date(p.paidDate);
-      return pDate.getMonth() === thisMonth && pDate.getFullYear() === thisYear;
+      return pDate.getMonth() === thisMonth && pDate.getFullYear() === currentYear;
     }).reduce((a, b) => a + b.amount, 0);
 
     res.json({
