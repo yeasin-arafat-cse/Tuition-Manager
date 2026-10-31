@@ -9,11 +9,11 @@ import Notice from "../models/Notice.js";
 // @route   GET /api/dashboard/teacher
 export const getTeacherDashboard = async (req, res) => {
   try {
-    // 👈 এই লাইনটি যোগ করুন (সার্ভারকে বাংলাদেশের সময়ে সেট করবে)
-    process.env.TZ = 'Asia/Dhaka';
+    // 👈 সার্ভারকে বাংলাদেশের সময়ে সেট করবে
+    process.env.TZ = 'Asia/Dhaka'; 
 
     const teacherId = req.user._id;
-    const range = req.query.range || 'monthly';
+    const range = req.query.range || '6months';
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
@@ -170,6 +170,9 @@ export const getStudentDashboard = async (req, res) => {
     
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
+    
+    // 👈 monthNames এখানে ডিফাইন করা হলো (No Data Found এরর ফিক্স)
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const joinDate = new Date(studentProfile.joinDate);
     joinDate.setHours(0, 0, 0, 0);
@@ -233,6 +236,7 @@ export const getStudentDashboard = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Student Dashboard Error:", error); 
     res.status(500).json({ success: false, message: error.message });
   }
 };
