@@ -9,8 +9,11 @@ import Notice from "../models/Notice.js";
 // @route   GET /api/dashboard/teacher
 export const getTeacherDashboard = async (req, res) => {
   try {
+    // 👈 এই লাইনটি যোগ করুন (সার্ভারকে বাংলাদেশের সময়ে সেট করবে)
+    process.env.TZ = 'Asia/Dhaka';
+
     const teacherId = req.user._id;
-    const range = req.query.range || '6months';
+    const range = req.query.range || 'monthly';
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
