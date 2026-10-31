@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext'; 
 import toast from 'react-hot-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
 const getLocalDateString = () => {
@@ -14,13 +14,14 @@ const getLocalDateString = () => {
 const TeacherDashboard = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [chartRange, setChartRange] = useState('6months');
+  const [chartRange, setChartRange] = useState('6months'); 
   const [todayDate, setTodayDate] = useState(getLocalDateString());
   
   const { t } = useApp();
   const { user } = useAuth(); 
 
   const fetchDashboard = async (range) => {
+    setIsLoading(true);
     try {
       const res = await api.get(`/dashboard/teacher?range=${range}`);
       setData(res.data.data);
@@ -33,7 +34,6 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboard(chartRange);
-
     const interval = setInterval(() => {
       const currentLocalDate = getLocalDateString();
       if (currentLocalDate !== todayDate) {
@@ -41,7 +41,6 @@ const TeacherDashboard = () => {
         fetchDashboard(chartRange);
       }
     }, 10000); 
-
     return () => clearInterval(interval);
   }, [chartRange, todayDate]);
 
@@ -51,24 +50,18 @@ const TeacherDashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
-  // ব্রাউজারের তারিখের ওপর ভিত্তি করে Today's Class ফিল্টার
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const localDayName = daysOfWeek[new Date().getDay()];
-  
-  // 👈 অসম্পূর্ণ ক্লাস বাদ দেওয়ার লজিক
   const todayClasses = data?.allSchedules?.filter(schedule => 
-    schedule.day === localDayName && 
-    schedule.student && 
-    schedule.subject && 
-    schedule.subject.trim() !== ''
+    schedule.day === localDayName && schedule.student && schedule.subject?.trim() !== ''
   ) || [];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px', border: '1px solid var(--border)', borderRadius: '8px' }}>
-          <p style={{ fontWeight: 'bold' }}>{label}</p>
-          <p style={{ color: 'var(--primary)' }}>Tk {payload[0].value}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{label}</p>
+          <p style={{ color: 'var(--primary)', fontWeight: '600' }}>Tk {payload[0].value}</p>
         </div>
       );
     }
@@ -109,6 +102,7 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
+        {/* 👈 Today's Income এর জায়গায় Total Exams */}
         <div className="stat-card">
           <div className="stat-icon success">📝</div>
           <div className="stat-info">
@@ -116,33 +110,47 @@ const TeacherDashboard = () => {
             <h2>{data.totalExams}</h2>
           </div>
         </div>
+
+        <div className="stat-card">
+          <div className="stat-icon warning" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>💵</div>
+          <div className="stat-info">
+            <h3>{t("This Month", "এই মাসের আয়")}</h3>
+            <h2>Tk {data.thisMonthIncome || 0}</h2>
+          </div>
+        </div>
       </div>
 
       {/* চার্ট সেকশন */}
       <div className="dashboard-section" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 className="section-title" style={{ margin: 0 }}>📈 {t("Income Overview", "আয়ের হিসাব")}</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 className="section-title" style={{ margin: 0 }}>📊 {t("Income Overview", "আয়ের হিসাব")}</h2>
           
           <select 
             value={chartRange} 
             onChange={(e) => setChartRange(e.target.value)}
-            style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', fontWeight: '500' }}
+            style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', fontWeight: '600', outline: 'none', cursor: 'pointer' }}
           >
             <option value="1month">{t("This Month", "এই মাস")}</option>
             <option value="6months">{t("Last 6 Months", "গত ৬ মাস")}</option>
-            <option value="1year">{t("Last 1 Year", "গত ১ বছর")}</option>
+            <option value="1year">{t("This Year", "এই বছর")}</option>
           </select>
         </div>
 
-        <div style={{ width: '100%', height: 300 }}>
+        <div style={{ width: '100%', height: 350 }}>
           <ResponsiveContainer>
-            <BarChart data={data.incomeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={data.incomeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(79, 70, 229, 0.1)' }} />
-              <Bar dataKey="income" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={chartRange === '1year' ? 20 : 40} />
-            </BarChart>
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="income" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>

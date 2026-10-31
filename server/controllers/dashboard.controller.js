@@ -10,7 +10,7 @@ import Notice from "../models/Notice.js";
 export const getTeacherDashboard = async (req, res) => {
   try {
     const teacherId = req.user._id;
-    const range = req.query.range || 'monthly';
+    const range = req.query.range || '6months';
 
     const totalStudents = await Student.countDocuments({ teacher: teacherId, active: true });
 
@@ -60,38 +60,68 @@ export const getTeacherDashboard = async (req, res) => {
 
     const totalExams = await Exam.countDocuments({ teacher: teacherId });
 
-    // 👈 চার্ট ডেটা (সব ১২টি মাস দেখাবে)
+    // 👈 চার্ট ডেটা (Range অনুযায়ী)
     let incomeChartData = [];
     const allPaidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
 
-    // জানুয়ারি থেকে ডিসেম্বর পর্যন্ত লুপ চালানো
-    for (let i = 0; i < 12; i++) {
-      const mName = monthNames[i]; 
-      
-      const monthlyIncome = allPaidPayments
-        .filter(p => {
-          if (!p.paidDate) return false;
-          const pDate = new Date(p.paidDate);
-          return pDate.getMonth() === i && pDate.getFullYear() === currentYear;
-        })
-        .reduce((acc, curr) => acc + curr.amount, 0);
+    if (range === '1month') {
+      // This Month (চলতি মাসের দৈনিক আয়)
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      for (let i = 1; i <= daysInMonth; i++) {
+        const monthlyIncome = allPaidPayments
+          .filter(p => {
+            if (!p.paidDate) return false;
+            const pDate = new Date(p.paidDate);
+            return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear && pDate.getDate() === i;
+          })
+          .reduce((acc, curr) => acc + curr.amount, 0);
 
-      incomeChartData.push({ 
-        name: `${mName.slice(0, 3)}`, 
-        income: monthlyIncome 
-      });
+        incomeChartData.push({ name: `${i}`, income: monthlyIncome });
+      }
+    } else if (range === '1year') {
+      // Yearly (চলতি বছরের ১২ মাস)
+      for (let i = 0; i < 12; i++) {
+        const mName = monthNames[i];
+        const monthlyIncome = allPaidPayments
+          .filter(p => {
+            if (!p.paidDate) return false;
+            const pDate = new Date(p.paidDate);
+            return pDate.getMonth() === i && pDate.getFullYear() === currentYear;
+          })
+          .reduce((acc, curr) => acc + curr.amount, 0);
+
+        incomeChartData.push({ name: `${mName.slice(0, 3)}`, income: monthlyIncome });
+      }
+    } else {
+      // Default: Last 6 Months (গত ৬ মাস)
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mName = monthNames[d.getMonth()];
+        const y = d.getFullYear();
+
+        const monthlyIncome = allPaidPayments
+          .filter(p => {
+            if (!p.paidDate) return false;
+            const pDate = new Date(p.paidDate);
+            return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === y;
+          })
+          .reduce((acc, curr) => acc + curr.amount, 0);
+
+        incomeChartData.push({ name: `${mName.slice(0, 3)} ${y.toString().slice(-2)}`, income: monthlyIncome });
+      }
     }
 
     // আজকের আয় ও এই মাসের আয়
     const todayStr = new Date().toDateString();
     const todayIncome = allPaidPayments.filter(p => p.paidDate && new Date(p.paidDate).toDateString() === todayStr).reduce((a, b) => a + b.amount, 0);
     
-    const thisMonth = new Date().getMonth();
     const thisMonthIncome = allPaidPayments.filter(p => {
       if (!p.paidDate) return false;
       const pDate = new Date(p.paidDate);
-      return pDate.getMonth() === thisMonth && pDate.getFullYear() === currentYear;
+      return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
     }).reduce((a, b) => a + b.amount, 0);
 
     res.json({
