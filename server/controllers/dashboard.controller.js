@@ -9,7 +9,6 @@ import Notice from "../models/Notice.js";
 // @route   GET /api/dashboard/teacher
 export const getTeacherDashboard = async (req, res) => {
   try {
-    // 👈 সার্ভারকে বাংলাদেশের সময়ে সেট করবে
     process.env.TZ = 'Asia/Dhaka'; 
 
     const teacherId = req.user._id;
@@ -70,7 +69,6 @@ export const getTeacherDashboard = async (req, res) => {
     const currentMonth = new Date().getMonth();
 
     if (range === '1month') {
-      // This Month (চলতি মাসের দৈনিক আয়)
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
         const monthlyIncome = allPaidPayments
@@ -84,7 +82,6 @@ export const getTeacherDashboard = async (req, res) => {
         incomeChartData.push({ name: `${i}`, income: monthlyIncome });
       }
     } else if (range === '1year') {
-      // Yearly (চলতি বছরের ১২ মাস)
       for (let i = 0; i < 12; i++) {
         const mName = monthNames[i];
         const monthlyIncome = allPaidPayments
@@ -98,7 +95,6 @@ export const getTeacherDashboard = async (req, res) => {
         incomeChartData.push({ name: `${mName.slice(0, 3)}`, income: monthlyIncome });
       }
     } else {
-      // Default: Last 6 Months (গত ৬ মাস)
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
@@ -117,7 +113,6 @@ export const getTeacherDashboard = async (req, res) => {
       }
     }
 
-    // আজকের আয় ও এই মাসের আয়
     const todayStr = new Date().toDateString();
     const todayIncome = allPaidPayments.filter(p => p.paidDate && new Date(p.paidDate).toDateString() === todayStr).reduce((a, b) => a + b.amount, 0);
     
@@ -148,7 +143,7 @@ export const getTeacherDashboard = async (req, res) => {
 // @route   GET /api/dashboard/student
 export const getStudentDashboard = async (req, res) => {
   try {
-    // 👈 এই লাইনটি যোগ করুন (সার্ভারকে বাংলাদেশের সময়ে সেট করবে)
+    // 👈 সার্ভারকে বাংলাদেশের সময়ে সেট করবে
     process.env.TZ = 'Asia/Dhaka';
 
     const studentProfile = await Student.findOne({ user: req.user._id });
@@ -157,8 +152,23 @@ export const getStudentDashboard = async (req, res) => {
       return res.status(404).json({ success: false, message: "Student profile not linked" });
     }
 
-    const totalPresent = await Attendance.countDocuments({ student: studentProfile._id, status: "present" });
-    const totalAbsent = await Attendance.countDocuments({ student: studentProfile._id, status: "absent" });
+    // 👈 চলতি মাসের শুরুর তারিখ এবং শেষ তারিখ বের করা
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // 👈 শুধু চলতি মাসের হাজিরা গণনা করা (All time total ফিক্স)
+    const totalPresent = await Attendance.countDocuments({ 
+      student: studentProfile._id, 
+      status: "present",
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+    
+    const totalAbsent = await Attendance.countDocuments({ 
+      student: studentProfile._id, 
+      status: "absent",
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
     
     const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
     const currentYearNum = new Date().getFullYear();
@@ -174,7 +184,6 @@ export const getStudentDashboard = async (req, res) => {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
     
-    // 👈 monthNames এখানে ডিফাইন করা হলো (No Data Found এরর ফিক্স)
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const joinDate = new Date(studentProfile.joinDate);
