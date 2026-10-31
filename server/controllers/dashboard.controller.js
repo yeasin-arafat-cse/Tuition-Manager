@@ -148,6 +148,9 @@ export const getTeacherDashboard = async (req, res) => {
 // @route   GET /api/dashboard/student
 export const getStudentDashboard = async (req, res) => {
   try {
+    // 👈 এই লাইনটি যোগ করুন (সার্ভারকে বাংলাদেশের সময়ে সেট করবে)
+    process.env.TZ = 'Asia/Dhaka';
+
     const studentProfile = await Student.findOne({ user: req.user._id });
     
     if (!studentProfile) {
