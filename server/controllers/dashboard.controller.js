@@ -60,39 +60,64 @@ export const getTeacherDashboard = async (req, res) => {
 
     const totalExams = await Exam.countDocuments({ teacher: teacherId });
 
-    let monthsToFetch = 6;
-    if (range === '1year') monthsToFetch = 12;
-    if (range === '1month') monthsToFetch = 1;
+    // 👈 আয়ের চার্ট ডেটা (Daily, Monthly, Yearly) — ডাবল লাইন ফিক্স সহ
+    let incomeChartData = [];
+    const allPaidPayments = await Payment.find({ teacher: teacherId, status: "paid" });
 
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1)); 
+    if (range === 'daily') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateString = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+        
+        const dailyIncome = allPaidPayments
+          .filter(p => p.paidDate && new Date(p.paidDate).toDateString() === d.toDateString())
+          .reduce((acc, curr) => acc + curr.amount, 0);
+          
+        incomeChartData.push({ name: dateString, income: dailyIncome });
+      }
+    } else if (range === 'yearly') {
+      const currentYear = new Date().getFullYear();
+      for (let i = 4; i >= 0; i--) {
+        const year = currentYear - i;
+        const yearlyIncome = allPaidPayments
+          .filter(p => p.paidDate && new Date(p.paidDate).getFullYear() === year)
+          .reduce((acc, curr) => acc + curr.amount, 0);
+        incomeChartData.push({ name: year.toString(), income: yearlyIncome });
+      }
+    } else {
+      // ডিফল্ট: গত ৬ মাসের আয় (monthly)
+      const monthsToFetch = 6;
+      for (let i = monthsToFetch - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mName = monthNames[d.getMonth()].slice(0, 3);
+        const y = d.getFullYear();
+        
+        // 👈 এখানে ফিক্স করা হলো: নির্দিষ্ট মাসের সব পেমেন্ট যোগ হবে
+        const monthlyIncome = allPaidPayments
+          .filter(p => {
+            if (!p.paidDate) return false;
+            const pDate = new Date(p.paidDate);
+            return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === y;
+          })
+          .reduce((acc, curr) => acc + curr.amount, 0);
 
-    const paidPaymentsForChart = await Payment.find({ 
-      teacher: teacherId, 
-      status: "paid",
-      paidDate: { $gte: startDate } 
-    });
-
-    const incomeChartData = [];
-    
-    for (let i = monthsToFetch - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const mName = monthNames[d.getMonth()];
-      const y = d.getFullYear();
-      
-      const monthlyIncome = paidPaymentsForChart
-        .filter(p => {
-          const pDate = new Date(p.paidDate);
-          return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === y;
-        })
-        .reduce((acc, curr) => acc + curr.amount, 0);
-
-      incomeChartData.push({
-        name: `${mName.slice(0, 3)} ${y.toString().slice(-2)}`,
-        income: monthlyIncome
-      });
+        incomeChartData.push({ name: `${mName} ${y.toString().slice(-2)}`, income: monthlyIncome });
+      }
     }
+
+    // আজকের আয় ও এই মাসের আয়
+    const todayStr = new Date().toDateString();
+    const todayIncome = allPaidPayments.filter(p => p.paidDate && new Date(p.paidDate).toDateString() === todayStr).reduce((a, b) => a + b.amount, 0);
+    
+    const thisMonth = new Date().getMonth();
+    const thisYear = new Date().getFullYear();
+    const thisMonthIncome = allPaidPayments.filter(p => {
+      if (!p.paidDate) return false;
+      const pDate = new Date(p.paidDate);
+      return pDate.getMonth() === thisMonth && pDate.getFullYear() === thisYear;
+    }).reduce((a, b) => a + b.amount, 0);
 
     res.json({
       success: true,
@@ -101,7 +126,9 @@ export const getTeacherDashboard = async (req, res) => {
         totalDue,
         allSchedules,
         totalExams,
-        incomeChartData
+        incomeChartData,
+        todayIncome,
+        thisMonthIncome
       }
     });
   } catch (error) {
@@ -135,7 +162,6 @@ export const getStudentDashboard = async (req, res) => {
     
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const joinDate = new Date(studentProfile.joinDate);
     joinDate.setHours(0, 0, 0, 0);
@@ -164,7 +190,6 @@ export const getStudentDashboard = async (req, res) => {
 
     const studentSchedules = await Schedule.find({ student: studentProfile._id });
 
-    // 👈 নতুন: নির্দিষ্ট স্টুডেন্ট অথবা সবার জন্য নোটিশ আনা
     const notices = await Notice.find({ 
       teacher: studentProfile.teacher,
       $or: [

@@ -7,11 +7,12 @@ import './AIMCQ.css';
 const AIMCQ = () => {
   const [inputType, setInputType] = useState('text');
   const [text, setText] = useState('');
-  const [files, setFiles] = useState([]); // 👈 একাধিক ফাইলের জন্য অ্যারে
+  const [files, setFiles] = useState([]); 
   
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
   const [subject, setSubject] = useState('');
+  const [studentClass, setStudentClass] = useState(''); // 👈 নতুন স্টেট
   const [questionType, setQuestionType] = useState('mcq'); 
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -47,7 +48,7 @@ const AIMCQ = () => {
         formData.append('text', text);
       } else {
         files.forEach(f => {
-          formData.append('files', f); // 👈 একাধিক ফাইল অ্যাপেন্ড
+          formData.append('files', f); 
         });
       }
       formData.append('numQuestions', numQuestions);
@@ -71,10 +72,14 @@ const AIMCQ = () => {
 
   const handleSaveAndDownload = async () => {
     if (generatedQuestions.length === 0) return;
+    if (!studentClass.trim()) {
+      return toast.error(t("Please enter a class name", "অনুগ্রহ করে ক্লাসের নাম দিন"));
+    }
     setIsSaving(true);
 
     try {
       await api.post('/ai/save', {
+        class: studentClass,
         subject: subject || "General",
         source: inputType,
         questions: generatedQuestions
@@ -131,7 +136,7 @@ const AIMCQ = () => {
                   onChange={handleFileChange}
                   style={{ display: 'none' }}
                   id="file-upload"
-                  multiple // 👈 একাধিক ফাইল সিলেক্ট
+                  multiple 
                 />
                 <label htmlFor="file-upload" style={{ cursor: 'pointer', color: 'var(--primary)', fontWeight: '600' }}>
                   {files.length > 0 ? `Selected: ${files.length} files` : `Click to Upload ${inputType.toUpperCase()}`}
@@ -164,9 +169,22 @@ const AIMCQ = () => {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label>{t("Subject", "বিষয়")}</label>
-              <input type="text" placeholder="e.g. Science" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            {/* 👈 ক্লাস ও সাবজেক্ট ইনপুট */}
+            <div className="form-row" style={{ marginBottom: '1rem' }}>
+              <div className="form-group">
+                <label>{t("Class", "ক্লাস")}</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Class 8" 
+                  value={studentClass} 
+                  onChange={(e) => setStudentClass(e.target.value)} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>{t("Subject", "বিষয়")}</label>
+                <input type="text" placeholder="e.g. Science" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              </div>
             </div>
 
             <button type="submit" className="auth-btn" disabled={isGenerating} style={{ width: '100%' }}>

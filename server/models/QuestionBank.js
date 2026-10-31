@@ -19,6 +19,7 @@ const questionSchema = new mongoose.Schema({
 const questionBankSchema = new mongoose.Schema(
   {
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    class: { type: String, required: true }, // 👈 নতুন: ক্লাস
     subject: { type: String, required: true },
     source: { type: String, enum: ["pdf", "text", "image"], required: true },
     questions: [questionSchema],

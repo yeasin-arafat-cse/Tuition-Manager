@@ -13,7 +13,7 @@ const extractTextFromPdf = (buffer) => {
   });
 };
 
-// @desc    Generate MCQ/Short/Creative (Supports Multiple Files)
+// @desc    Generate MCQ/Short/Creative
 // @route   POST /api/ai/generate
 export const generateMCQ = async (req, res) => {
   try {
@@ -22,12 +22,10 @@ export const generateMCQ = async (req, res) => {
     let questions = [];
     let extractedText = text || "";
 
-    // 👈 req.files চেক করা হচ্ছে (একাধিক ফাইলের জন্য)
     if (req.files && req.files.length > 0) {
       const pdfFiles = req.files.filter(f => f.mimetype === "application/pdf");
       const imageFiles = req.files.filter(f => f.mimetype.startsWith("image/"));
 
-      // ১. যদি PDF থাকে
       if (pdfFiles.length > 0) {
         source = "pdf";
         for (const file of pdfFiles) {
@@ -38,14 +36,12 @@ export const generateMCQ = async (req, res) => {
         }
         questions = await generateMCQFromText(extractedText, numQuestions || 10, difficulty || "medium", questionType || "mcq");
       } 
-      // ২. যদি Image থাকে (এক বা একাধিক)
       else if (imageFiles.length > 0) {
         source = "image";
         const base64Images = imageFiles.map(f => f.buffer.toString("base64"));
         questions = await generateMCQFromImage(base64Images, "image/jpeg", numQuestions || 10, difficulty || "medium", questionType || "mcq");
       }
     } 
-    // ৩. যদি শুধু টেক্সট থাকে
     else if (extractedText) {
       source = "text";
       questions = await generateMCQFromText(extractedText, numQuestions || 10, difficulty || "medium", questionType || "mcq");
@@ -65,9 +61,15 @@ export const generateMCQ = async (req, res) => {
 // @route   POST /api/ai/save
 export const saveMCQ = async (req, res) => {
   try {
-    const { subject, source, questions } = req.body;
+    const { class: studentClass, subject, source, questions } = req.body;
+    
+    if (!studentClass) {
+      return res.status(400).json({ success: false, message: "Class is required" });
+    }
+
     const bank = await QuestionBank.create({
       teacher: req.user._id,
+      class: studentClass,
       subject,
       source,
       questions,
@@ -78,11 +80,23 @@ export const saveMCQ = async (req, res) => {
   }
 };
 
-// @desc    Get all Question Banks
+// @desc    Get all Question Banks (With Filters)
 // @route   GET /api/ai/question-bank
 export const getQuestionBanks = async (req, res) => {
   try {
-    const banks = await QuestionBank.find({ teacher: req.user._id }).sort({ createdAt: -1 });
+    const { class: filterClass, subject: filterSubject } = req.query;
+    
+    let query = { teacher: req.user._id };
+    
+    // 👈 কেস-ইনসেনসিটিভ (Case-insensitive) সার্চ
+    if (filterClass) {
+      query.class = { $regex: filterClass, $options: "i" };
+    }
+    if (filterSubject) {
+      query.subject = { $regex: filterSubject, $options: "i" }; 
+    }
+
+    const banks = await QuestionBank.find(query).sort({ createdAt: -1 });
     res.json({ success: true, banks });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

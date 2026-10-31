@@ -10,11 +10,23 @@ const QuestionBank = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
+  
+  // 👈 সার্চ ও ফিল্টার স্টেট
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterSubject, setFilterSubject] = useState('');
+
   const { t } = useApp();
 
   const fetchBanks = async () => {
+    setIsLoading(true);
     try {
-      const res = await api.get('/ai/question-bank');
+      // 👈 API-তে কুয়েরি প্যারামিটার পাঠানো হচ্ছে
+      let url = '/ai/question-bank?';
+      if (filterClass) url += `class=${filterClass}&`;
+      if (filterSubject) url += `subject=${filterSubject}`;
+
+      const res = await api.get(url);
       setBanks(res.data.banks);
     } catch (error) {
       toast.error('Failed to load question banks');
@@ -23,9 +35,10 @@ const QuestionBank = () => {
     }
   };
 
+  // ফিল্টার বা সাবজেক্ট চেঞ্জ হলে ডেটা রিফ্রেশ হবে
   useEffect(() => {
     fetchBanks();
-  }, []);
+  }, [filterClass, filterSubject]);
 
   const handleDelete = async (id) => {
     if (!window.confirm(t("Are you sure you want to delete this question bank?", "আপনি কি নিশ্চিত এই প্রশ্ন ব্যাংকটি ডিলিট করতে চান?"))) return;
@@ -43,27 +56,68 @@ const QuestionBank = () => {
     setIsModalOpen(true);
   };
 
-  if (isLoading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
+    // 👈 টাইটেল দিয়ে সার্চ করার জন্য লোকাল ফিল্টার (নিরাপদভাবে)
+  const filteredBanks = banks.filter(bank => {
+    const term = searchTerm.toLowerCase();
+    const bankClass = bank.class ? bank.class.toLowerCase() : '';
+    const bankSubject = bank.subject ? bank.subject.toLowerCase() : '';
+    
+    return bankClass.includes(term) || bankSubject.includes(term);
+  });
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 className="page-title">{t("Question Bank", "প্রশ্ন ব্যাংক")}</h1>
       </div>
 
-      {banks.length === 0 ? (
+      {/* 👈 সার্চ এবং ফিল্টার সেকশন (Text Input) */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+        
+        <input 
+          type="text" 
+          placeholder={t("Search by subject or class...", "বিষয় বা ক্লাস দিয়ে খুঁজুন...")}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flex: 1, minWidth: '200px', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+        />
+
+        <input 
+          type="text" 
+          placeholder={t("Class (e.g. 8, 10)", "ক্লাস (যেমন: 8, 10)")}
+          value={filterClass}
+          onChange={(e) => setFilterClass(e.target.value)}
+          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)', minWidth: '120px' }}
+        />
+
+        <input 
+          type="text" 
+          placeholder={t("Subject (e.g. Math)", "বিষয় (যেমন: Math)")}
+          value={filterSubject}
+          onChange={(e) => setFilterSubject(e.target.value)}
+          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)', minWidth: '120px' }}
+        />
+
+      </div>
+
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
+      ) : filteredBanks.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <h3>{t("No questions saved yet.", "এখনো কোনো প্রশ্ন সেভ করা হয়নি।")}</h3>
-          <p>Go to AI page to generate and save questions.</p>
+          <h3>{t("No questions found.", "কোনো প্রশ্ন পাওয়া যায়নি।")}</h3>
+          <p>Try changing the filters or search term.</p>
         </div>
       ) : (
         <div className="exam-list">
-          {banks.map((bank) => (
+          {filteredBanks.map((bank) => (
             <div key={bank._id} className="exam-card" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>{bank.subject}</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 'bold' }}>
+                    {bank.class} {/* 👈 ক্লাস দেখানো হচ্ছে */}
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     {t("Source:", "সোর্স:")} <span style={{ textTransform: 'uppercase' }}>{bank.source}</span> | 
                     {t("Total:", "মোট:")} {bank.questions.length} Qs
                   </p>
@@ -99,7 +153,7 @@ const QuestionBank = () => {
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '700px' }}>
             <div className="modal-header">
-              <h2>{selectedBank.subject} - {t("Questions", "প্রশ্নসমূহ")}</h2>
+              <h2>{selectedBank.subject} ({selectedBank.class}) - {t("Questions", "প্রশ্নসমূহ")}</h2>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
             </div>
             
