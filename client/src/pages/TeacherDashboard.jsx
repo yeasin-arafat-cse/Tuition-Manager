@@ -102,7 +102,6 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        {/* 👈 Today's Income এর জায়গায় Total Exams */}
         <div className="stat-card">
           <div className="stat-icon success">📝</div>
           <div className="stat-info">
@@ -149,7 +148,18 @@ const TeacherDashboard = () => {
               <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="income" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+              
+              {/* 👈 ডট (বৃত্ত) যুক্ত করা হলো */}
+              <Area 
+                type="monotone" 
+                dataKey="income" 
+                stroke="var(--primary)" 
+                strokeWidth={3} 
+                fillOpacity={1} 
+                fill="url(#colorIncome)" 
+                dot={{ r: 5, fill: "var(--bg-card)", stroke: "var(--primary)", strokeWidth: 3 }} 
+                activeDot={{ r: 8, fill: "var(--primary)", stroke: "white", strokeWidth: 2 }}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
