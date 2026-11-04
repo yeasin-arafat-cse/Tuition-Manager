@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
 import connectDB from "./config/db.js";
 
 // Routes Import
@@ -55,8 +54,23 @@ const apiLimiter = rateLimit({
 });
 app.use("/api", apiLimiter);
 
-// 🛡️ 4. Data Sanitization (NoSQL Injection ঠেকাতে)
-app.use(mongoSanitize());
+// 🛡️ 4. Data Sanitization (Express v5 সাপোর্টেড কাস্টম লজিক)
+app.use((req, res, next) => {
+  const sanitize = (data) => {
+    if (data && typeof data === 'object') {
+      for (let key in data) {
+        if (key.startsWith('$') || key.includes('.')) {
+          delete data[key];
+        } else {
+          sanitize(data[key]);
+        }
+      }
+    }
+  };
+  sanitize(req.body);
+  sanitize(req.params);
+  next();
+});
 
 // Middleware
 app.use(express.json({ limit: '10mb' })); 
