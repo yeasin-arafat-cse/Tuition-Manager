@@ -24,8 +24,39 @@ connectDB();
 
 const app = express();
 
-// 🛡️ 1. Security Headers (Helmet)
-app.use(helmet());
+// 🛡️ 1. Security Headers (Helmet) — ৫টি হেডার নিশ্চিত করতে
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+        connectSrc: ["'self'", "https://tuition-manager-0xwc.onrender.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"], 
+        upgradeInsecureRequests: [],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// 👈 বোনাস: ম্যানুয়ালি হেডার সেট (Helmet এর পাশাপাশি নিশ্চিত করার জন্য)
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  next();
+});
 
 // 🛡️ 2. CORS Setup (শুধুমাত্র আপনার ফ্রন্টএন্ড লিংক)
 const allowedOrigins = [
