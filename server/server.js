@@ -46,6 +46,8 @@ app.use(
       preload: true,
     },
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    frameguard: { action: "sameorigin" }, // X-Frame-Options
+    noSniff: true, // X-Content-Type-Options
     crossOriginEmbedderPolicy: false,
   })
 );
@@ -61,7 +63,7 @@ app.use((req, res, next) => {
 // 🛡️ 2. CORS Setup (শুধুমাত্র আপনার ফ্রন্টএন্ড লিংক)
 const allowedOrigins = [
   "http://localhost:5173", 
-  "https://yeasin-tuition-manager.vercel.app" // 👈 আপনার Vercel লাইভ লিংকটি এখানে বসান
+  "https://yeasin-tuition-manager.vercel.app/" // 👈 আপনার Vercel লাইভ লিংকটি এখানে বসান
 ];
 
 app.use(cors({
